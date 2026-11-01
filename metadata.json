@@ -1,0 +1,6 @@
+{
+  "name": "Markazul Furqan Quran Memorization Center",
+  "description": "Official portal and website for Markazul Furqan Quran Memorization Center in Chiro, Ethiopia. Features student Hifz tracking, Sabaq/Sabqi/Manzil ledger, admission enrollment, printable certificates, and Vision 2030 development.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

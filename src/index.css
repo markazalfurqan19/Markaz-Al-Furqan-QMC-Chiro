@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-quran {
+    font-family: 'Amiri', serif;
+  }
+}
+
+.islamic-pattern {
+  background-color: #0F5132;
+  background-image: radial-gradient(rgba(212, 175, 55, 0.22) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+.islamic-pattern-subtle {
+  background-color: #0A3622;
+  background-image: radial-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.islamic-star-border {
+  border-image: linear-gradient(to right, #0F5132, #D4AF37, #0F5132) 1;
+}
+
+/* Professional Print Styling for Official Reports & Certificates */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-report-area,
+  #printable-report-area * {
+    visibility: visible;
+  }
+  #printable-report-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+    background: white !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markazul Furqan Quran Memorization Center | Chiro, Ethiopia</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js Declarative Framework -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts (Amiri for Arabic, Inter for Latin) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              emerald: '#0F5132',
+              emeraldDark: '#0A3622',
+              emeraldLight: '#198754',
+              gold: '#D4AF37',
+              goldLight: '#E9C46A',
+              charcoal: '#212529',
+              lightBg: '#F8F9FA'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            quran: ['Amiri', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Professional Print Styling for Official Reports & Certificates */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-report-area, #printable-report-area * {
+        visibility: visible;
+      }
+      #printable-report-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: white !important;
+        color: black !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+    .islamic-pattern {
+      background-color: #0F5132;
+      background-image: radial-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-brand-lightBg text-brand-charcoal font-sans antialiased" x-data="markazApp()">
+
+  <!-- 1. TOP UTILITY BAR -->
+  <div class="bg-brand-emeraldDark text-white text-xs py-2 px-6 border-b border-brand-emerald/40 no-print">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <div class="flex items-center gap-4">
+        <span><i class="fa-solid fa-location-dot text-brand-gold mr-1"></i> Chiro, Oromia, Ethiopia</span>
+        <span><i class="fa-solid fa-user-tie text-brand-gold mr-1"></i> Leadership: Ustaz Kadir Hamza Siyum</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button @click="showCloudConfigModal = true" class="hover:text-brand-gold transition flex items-center gap-1">
+          <i class="fa-solid fa-cloud text-xs"></i> Cloud Sync Config
+        </button>
+        <span class="text-brand-gold">|</span>
+        <button @click="openAuthModal()" class="hover:text-brand-gold transition font-semibold flex items-center gap-1">
+          <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i> 
+          <span x-text="currentUser ? currentUser.name : 'Mu\'allim / Admin Login'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. NAVIGATION HEADER -->
+  <header class="bg-white sticky top-0 z-40 shadow-sm border-b border-gray-200 no-print">
+    <div class="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center">
+      <div class="flex items-center gap-3 cursor-pointer" @click="currentTab = 'home'">
+        <div class="w-12 h-12 rounded-xl bg-brand-emerald flex items-center justify-center text-brand-gold text-2xl shadow-inner border border-brand-gold/40">
+          <i class="fa-solid fa-quran"></i>
+        </div>
+        <div>
+          <span class="text-xs uppercase tracking-widest text-brand-emerald font-bold block">Chiro • Ethiopia</span>
+          <h1 class="text-xl font-black text-brand-emerald tracking-tight leading-tight">MARKAZUL FURQAN</h1>
+          <p class="text-[11px] text-gray-500 font-medium">Quran Memorization & Arabic Center</p>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-7 text-sm font-semibold">
+        <a href="#about" @click="currentTab = 'home'" class="text-gray-700 hover:text-brand-emerald transition">About Center</a>
+        <a href="#programs" @click="currentTab = 'home'" class="text-gray-700 hover:text-brand-emerald transition">Curriculum</a>
+        <a href="#campaign" @click="currentTab = 'home'" class="text-gray-700 hover:text-brand-emerald transition">Vision 2030 (ETB 4.5M)</a>
+        <button @click="currentTab = 'portal'" class="bg-brand-emerald text-white px-4 py-2 rounded-lg hover:bg-brand-emeraldDark transition shadow-sm flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-brand-gold"></i> Academic Portal
+        </button>
+        <button @click="showAdmissionModal = true" class="bg-brand-gold text-brand-charcoal px-4 py-2 rounded-lg font-bold hover:bg-brand-goldLight transition shadow-sm">
+          Enroll Student
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 3. PUBLIC VIEW -->
+  <main x-show="currentTab === 'home'">
+    <!-- HERO SECTION -->
+    <section class="islamic-pattern text-white py-20 px-6 relative overflow-hidden">
+      <div class="max-w-5xl mx-auto text-center relative z-10">
+        <div class="inline-flex items-center gap-2 bg-brand-gold/20 border border-brand-gold text-brand-gold text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wider">
+          <i class="fa-solid fa-star-and-crescent"></i> Vision 2030 Regional Excellence
+        </div>
+        <h2 class="text-4xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
+          Preserving the Divine Words with Precision & Character
+        </h2>
+        <p class="font-quran text-2xl md:text-3xl text-brand-gold mb-6 font-normal">
+          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ • وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا
+        </p>
+        <p class="text-base md:text-lg text-emerald-100 max-w-3xl mx-auto mb-8 font-normal leading-relaxed">
+          Markazul Furqan in Chiro provides rigorous Sabaq, Sabqi, and Manzil instruction, authentic Tajweed, and comprehensive Arabic language under the direct leadership of <strong>Ustaz Kadir Hamza Siyum</strong>.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-4">
+          <button @click="showAdmissionModal = true" class="bg-brand-gold hover:bg-brand-goldLight text-brand-charcoal text-base font-bold px-8 py-3.5 rounded-xl shadow-lg transition transform hover:-translate-y-0.5">
+            <i class="fa-solid fa-file-signature mr-2"></i> Apply for 2018/2019 E.C.
+          </button>
+          <button @click="currentTab = 'portal'" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 text-base font-semibold px-8 py-3.5 rounded-xl backdrop-blur-sm transition">
+            <i class="fa-solid fa-graduation-cap mr-2"></i> Mu'allim & Student Portal
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS BANNER -->
+    <section class="bg-brand-emeraldDark border-b border-brand-gold/30 text-white py-8 px-6">
+      <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div class="border-r border-emerald-800/60 last:border-none">
+          <div class="text-3xl md:text-4xl font-black text-brand-gold">38</div>
+          <div class="text-xs uppercase text-emerald-200 mt-1 font-semibold tracking-wider">2018 E.C. Haffaz Graduates</div>
+        </div>
+        <div class="border-r border-emerald-800/60 last:border-none">
+          <div class="text-3xl md:text-4xl font-black text-brand-gold">100%</div>
+          <div class="text-xs uppercase text-emerald-200 mt-1 font-semibold tracking-wider">Certified Mu'allim Faculty</div>
+        </div>
+        <div class="border-r border-emerald-800/60 last:border-none">
+          <div class="text-3xl md:text-4xl font-black text-brand-gold">ETB 4.5M</div>
+          <div class="text-xs uppercase text-emerald-200 mt-1 font-semibold tracking-wider">Vision 2030 Expansion Goal</div>
+        </div>
+        <div>
+          <div class="text-3xl md:text-4xl font-black text-brand-gold">3-Tier</div>
+          <div class="text-xs uppercase text-emerald-200 mt-1 font-semibold tracking-wider">Hifz Retention System</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISION 2030 CAPITAL CAMPAIGN SECTION -->
+    <section id="campaign" class="py-16 px-6 bg-white">
+      <div class="max-w-5xl mx-auto">
+        <div class="bg-gradient-to-br from-emerald-50 to-amber-50 border border-brand-gold/40 rounded-2xl p-8 md:p-10 shadow-sm">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <span class="text-xs font-bold text-brand-emerald uppercase tracking-wider">Official Capital Expansion Campaign</span>
+              <h3 class="text-2xl md:text-3xl font-extrabold text-brand-charcoal">Vision 2030: Chiro Facility Infrastructure</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-500 font-medium">Target Building Fund</span>
+              <div class="text-2xl font-black text-brand-emerald">ETB 4,500,000</div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-200 rounded-full h-4 mb-3 overflow-hidden">
+            <div class="bg-brand-gold h-4 rounded-full transition-all duration-1000" style="width: 42%;"></div>
+          </div>
+          <div class="flex justify-between text-xs font-bold text-gray-600 mb-6">
+            <span>Collected: ETB 1,890,000 (42%)</span>
+            <span>Remaining: ETB 2,610,000</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+            <div class="p-4 bg-white rounded-xl border border-gray-200 text-center">
+              <div class="font-bold text-sm text-brand-emerald">Student Sponsorship</div>
+              <div class="text-lg font-black text-gray-800 my-1">ETB 12,000 / Yr</div>
+              <p class="text-xs text-gray-500">Full tuition, books, and boarding support for 1 Hafiz aspirant.</p>
+            </div>
+            <div class="p-4 bg-white rounded-xl border border-gray-200 text-center">
+              <div class="font-bold text-sm text-brand-emerald">Classroom Expansion</div>
+              <div class="text-lg font-black text-gray-800 my-1">ETB 150,000</div>
+              <p class="text-xs text-gray-500">Naming rights and continuous Sadaqah Jariyah for educational blocks.</p>
+            </div>
+            <div class="p-4 bg-white rounded-xl border border-gray-200 text-center">
+              <div class="font-bold text-sm text-brand-emerald">Direct Bank Channels</div>
+              <div class="text-xs font-semibold text-gray-800 mt-2">CBE: 1000123456789</div>
+              <div class="text-xs font-semibold text-gray-800">Telebirr: 0912 34 56 78</div>
+              <p class="text-[11px] text-gray-400 mt-1">Branch: Chiro, West Hararghe</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEADERSHIP & ACADEMIC TRACKS -->
+    <section id="about" class="py-16 px-6 bg-brand-lightBg">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm md:col-span-1">
+          <div class="w-20 h-20 bg-brand-emerald rounded-full flex items-center justify-center text-brand-gold text-3xl mb-4 mx-auto">
+            <i class="fa-solid fa-user-graduate"></i>
+          </div>
+          <h4 class="text-lg font-black text-center text-brand-charcoal">Ustaz Kadir Hamza Siyum</h4>
+          <p class="text-xs font-semibold text-center text-brand-emerald mb-4">Founder & Directorate Chair</p>
+          <blockquote class="text-xs italic text-gray-600 border-l-2 border-brand-gold pl-3 py-1">
+            "Our mission is to produce individuals who do not merely memorize the words, but embody the character of the Qur'an with academic excellence."
+          </blockquote>
+        </div>
+
+        <div class="md:col-span-2 space-y-4">
+          <h3 class="text-2xl font-black text-brand-emerald">Our Core Curricular Methodology</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div class="bg-white p-5 rounded-xl border border-gray-200">
+              <div class="text-brand-emerald text-xl mb-2 font-bold"><i class="fa-solid fa-book-open-reader"></i> Sabaq</div>
+              <h5 class="font-bold text-sm mb-1">New Lesson</h5>
+              <p class="text-xs text-gray-600">Daily memorization evaluated with absolute adherence to Makharij and Tajweed.</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl border border-gray-200">
+              <div class="text-brand-emerald text-xl mb-2 font-bold"><i class="fa-solid fa-arrows-rotate"></i> Sabqi</div>
+              <h5 class="font-bold text-sm mb-1">Recent Revision</h5>
+              <p class="text-xs text-gray-600">Revision of the last 5 to 10 pages memorized to consolidate short-term memory.</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl border border-gray-200">
+              <div class="text-brand-emerald text-xl mb-2 font-bold"><i class="fa-solid fa-layer-group"></i> Manzil</div>
+              <h5 class="font-bold text-sm mb-1">Cumulative Cycle</h5>
+              <p class="text-xs text-gray-600">Continuous rotation of completed Juz' to guarantee permanent, lifelong retention.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 4. ACADEMIC MANAGEMENT PORTAL (FULL DASHBOARD) -->
+  <main x-show="currentTab === 'portal'" class="max-w-7xl mx-auto px-6 py-8" style="display: none;">
+    
+    <!-- Portal Header Toolbar -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-gray-200 no-print">
+      <div>
+        <div class="inline-flex items-center gap-2 text-xs font-bold text-brand-emerald bg-emerald-100 px-3 py-1 rounded-full mb-1">
+          <i class="fa-solid fa-shield-halved"></i> Live Management Console
+        </div>
+        <h2 class="text-2xl font-black text-brand-charcoal">Student Hifz Logs & Academic Ledger</h2>
+        <p class="text-xs text-gray-500">Record Sabaq, track Sabqi/Manzil, generate formal certificates, and export records.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button @click="showHifzModal = true" class="bg-brand-emerald hover:bg-brand-emeraldDark text-white text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-sm flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i> Log Daily Sabaq
+        </button>
+        <button @click="exportToCSV()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-sm flex items-center gap-1.5">
+          <i class="fa-solid fa-file-csv text-green-400"></i> Export CSV
+        </button>
+        <button @click="currentTab = 'home'" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-4 py-2.5 rounded-lg transition">
+          Exit to Website
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 my-6 no-print">
+      <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <span class="text-xs text-gray-500 font-medium">Total Registered Haffaz</span>
+        <div class="text-2xl font-black text-brand-emerald mt-1" x-text="students.length"></div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <span class="text-xs text-gray-500 font-medium">Today's Completed Logs</span>
+        <div class="text-2xl font-black text-blue-600 mt-1" x-text="hifzLogs.length"></div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <span class="text-xs text-gray-500 font-medium">Cloud Sync Status</span>
+        <div class="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span x-text="cloudConfig.googleScriptUrl ? 'Google & Supabase Connected' : 'Local Mode (Cloud Ready)'"></span>
+        </div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <span class="text-xs text-gray-500 font-medium">Tuition Collections (ETB)</span>
+        <div class="text-2xl font-black text-brand-charcoal mt-1">ETB 142,500</div>
+      </div>
+    </div>
+
+    <!-- Student Table Controls -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden no-print">
+      <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="relative w-full sm:w-72">
+          <input type="text" x-model="searchQuery" placeholder="Search student name or ID..." class="w-full text-xs pl-8 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-brand-emerald">
+          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-500">Filter Level:</span>
+          <select x-model="filterJuz" class="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none">
+            <option value="ALL">All Juz Levels</option>
+            <option value="JUZ_1_10">Juz 1 - 10</option>
+            <option value="JUZ_11_20">Juz 11 - 20</option>
+            <option value="JUZ_21_30">Juz 21 - 30 (Khatm Track)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-gray-600">
+          <thead class="bg-gray-50 text-gray-700 uppercase font-semibold border-b border-gray-200">
+            <tr>
+              <th class="py-3 px-4">Student Code</th>
+              <th class="py-3 px-4">Student Name</th>
+              <th class="py-3 px-4">Current Juz</th>
+              <th class="py-3 px-4">Guardian Contact</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-center">Actions & Reports</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <template x-for="student in filteredStudents" :key="student.id">
+              <tr class="hover:bg-gray-50 transition">
+                <td class="py-3 px-4 font-mono font-bold text-brand-emerald" x-text="student.code"></td>
+                <td class="py-3 px-4 font-semibold text-gray-900" x-text="student.name"></td>
+                <td class="py-3 px-4">
+                  <span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[11px]" x-text="'Juz ' + student.juzLevel"></span>
+                </td>
+                <td class="py-3 px-4" x-text="student.guardianPhone"></td>
+                <td class="py-3 px-4">
+                  <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">Active</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <button @click="openStudentReport(student)" class="bg-brand-emerald hover:bg-brand-emeraldDark text-white px-2.5 py-1 rounded text-[11px] font-semibold transition">
+                    <i class="fa-solid fa-print mr-1"></i> Report Card
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. PRINTABLE REPORT CARD MODAL / PRINT CONTAINER -->
+    <div x-show="showReportModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative" @click.away="showReportModal = false">
+        
+        <!-- Action Buttons -->
+        <div class="flex justify-between items-center pb-4 border-b border-gray-200 no-print">
+          <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Academic Record Document</span>
+          <div class="flex items-center gap-2">
+            <button @click="window.print()" class="bg-brand-emerald text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-emeraldDark transition flex items-center gap-1">
+              <i class="fa-solid fa-print"></i> Print Document
+            </button>
+            <button @click="showReportModal = false" class="text-gray-400 hover:text-gray-600 text-lg px-2">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Official Printable Card Layout -->
+        <div id="printable-report-area" class="pt-6 pb-4">
+          <!-- Institutional Header -->
+          <div class="text-center border-b-2 border-brand-emerald pb-4 mb-4">
+            <h2 class="text-xl font-black text-brand-emerald">MARKAZUL FURQAN QURAN MEMORIZATION CENTER</h2>
+            <p class="text-xs text-gray-600 font-medium">Chiro, West Hararghe, Oromia Region, Ethiopia</p>
+            <p class="text-xs font-semibold text-brand-gold mt-1">Official Student Performance Transcript & Verification</p>
+          </div>
+
+          <template x-if="selectedStudent">
+            <div>
+              <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div>
+                  <span class="text-gray-500 block">Student Full Name:</span>
+                  <span class="font-bold text-sm text-gray-900" x-text="selectedStudent.name"></span>
+                </div>
+                <div>
+                  <span class="text-gray-500 block">Registration Code:</span>
+                  <span class="font-bold text-sm font-mono text-brand-emerald" x-text="selectedStudent.code"></span>
+                </div>
+                <div>
+                  <span class="text-gray-500 block">Current Progress Level:</span>
+                  <span class="font-bold text-gray-900" x-text="'Juz ' + selectedStudent.juzLevel + ' Completed'"></span>
+                </div>
+                <div>
+                  <span class="text-gray-500 block">Academic Year:</span>
+                  <span class="font-bold text-gray-900">2018 / 2019 E.C.</span>
+                </div>
+              </div>
+
+              <h4 class="text-xs font-bold uppercase text-brand-emerald mb-2">Recent Memorization & Revision Audit</h4>
+              <table class="w-full text-xs text-left border border-gray-200 mb-6">
+                <thead class="bg-gray-100 text-gray-700 font-bold">
+                  <tr>
+                    <th class="p-2 border">Track</th>
+                    <th class="p-2 border">Content Scope</th>
+                    <th class="p-2 border">Evaluation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="p-2 border font-semibold">Sabaq (New Lesson)</td>
+                    <td class="p-2 border">Surah Al-Baqarah (Ayat 1-50)</td>
+                    <td class="p-2 border font-bold text-emerald-700">Mumtaz (Excellent)</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border font-semibold">Sabqi (Recent Revision)</td>
+                    <td class="p-2 border">Juz 1 (Quarter 1 & 2)</td>
+                    <td class="p-2 border font-bold text-emerald-700">Mumtaz</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border font-semibold">Manzil (Retention Cycle)</td>
+                    <td class="p-2 border">Juz 30 (Full Recitation)</td>
+                    <td class="p-2 border font-bold text-blue-700">Jayyid Jiddan</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Institutional Sign-Off -->
+              <div class="grid grid-cols-2 gap-8 pt-8 mt-6 border-t border-gray-300 text-center">
+                <div>
+                  <div class="h-10 border-b border-dashed border-gray-400 mb-1"></div>
+                  <span class="text-[11px] font-bold text-gray-600">Assigned Mu'allim Signature</span>
+                </div>
+                <div>
+                  <div class="h-10 border-b border-dashed border-gray-400 mb-1"></div>
+                  <span class="text-[11px] font-bold text-gray-600">Ustaz Kadir Hamza Siyum (Director)</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 6. MODAL: ADMISSION ENROLLMENT FORM -->
+  <div x-show="showAdmissionModal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" style="display: none;">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative" @click.away="showAdmissionModal = false">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-black text-brand-emerald">Student Admission Application</h3>
+        <button @click="showAdmissionModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form @submit.prevent="submitAdmissionForm" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Full Student Name *</label>
+          <input type="text" x-model="admissionForm.fullName" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:border-brand-emerald">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Applicant / Guardian Phone *</label>
+            <input type="tel" x-model="admissionForm.phone" placeholder="09..." required class="w-full border border-gray-300 rounded-lg p-2.5 focus:border-brand-emerald">
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Guardian Full Name *</label>
+            <input type="text" x-model="admissionForm.guardianName" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:border-brand-emerald">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Track Selection</label>
+            <select x-model="admissionForm.track" class="w-full border border-gray-300 rounded-lg p-2.5">
+              <option value="HIFZ">Full-Time Hifz</option>
+              <option value="TAJWEED">Tajweed & Recitation</option>
+              <option value="ARABIC">Arabic Language Track</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Memorized Juz Prior</label>
+            <input type="number" x-model="admissionForm.priorJuz" min="0" max="30" class="w-full border border-gray-300 rounded-lg p-2.5">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Fee Payment Option (ETB)</label>
+          <select x-model="admissionForm.paymentChannel" class="w-full border border-gray-300 rounded-lg p-2.5">
+            <option value="TELEBIRR">Telebirr (Electronic)</option>
+            <option value="CBE">Commercial Bank of Ethiopia (CBE)</option>
+            <option value="AWASH">Awash Bank</option>
+            <option value="CASH">In-Person Cash at Chiro Office</option>
+          </select>
+        </div>
+
+        <div class="pt-4">
+          <button type="submit" class="w-full bg-brand-emerald hover:bg-brand-emeraldDark text-white font-bold py-3 rounded-xl transition shadow">
+            Submit Application & Sync to Cloud
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. MODAL: LOG HIFZ ENTRY -->
+  <div x-show="showHifzModal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" style="display: none;">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" @click.away="showHifzModal = false">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-black text-brand-emerald">Record Daily Hifz Progress</h3>
+        <button @click="showHifzModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form @submit.prevent="submitHifzLog" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Select Student</label>
+          <select x-model="newLog.studentCode" required class="w-full border border-gray-300 rounded-lg p-2.5">
+            <template x-for="st in students" :key="st.code">
+              <option :value="st.code" x-text="st.name + ' (' + st.code + ')'"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Sabaq: Surah & Ayah Range</label>
+          <input type="text" x-model="newLog.sabaqRange" placeholder="e.g. Surah An-Nur 1-20" required class="w-full border border-gray-300 rounded-lg p-2.5">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Sabqi (Recent Juz)</label>
+            <input type="number" x-model="newLog.sabqiJuz" min="1" max="30" required class="w-full border border-gray-300 rounded-lg p-2.5">
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Manzil (Cycle Juz)</label>
+            <input type="number" x-model="newLog.manzilJuz" min="1" max="30" required class="w-full border border-gray-300 rounded-lg p-2.5">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Daily Recitation Grade</label>
+          <select x-model="newLog.grade" class="w-full border border-gray-300 rounded-lg p-2.5 font-bold">
+            <option value="MUMTAZ">Mumtaz ( ممتاز - Excellent )</option>
+            <option value="JAYYID_JIDDAN">Jayyid Jiddan ( جيد جداً - Very Good )</option>
+            <option value="JAYYID">Jayyid ( جيد - Good )</option>
+            <option value="MAQBUL">Maqbul ( مقبول - Pass )</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Mu'allim Comments</label>
+          <textarea x-model="newLog.notes" rows="2" class="w-full border border-gray-300 rounded-lg p-2"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-brand-emerald text-white font-bold py-2.5 rounded-xl hover:bg-brand-emeraldDark transition shadow mt-2">
+          Save Entry & Trigger Sheet Sync
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 8. MODAL: CLOUD INTEGRATION SETTINGS -->
+  <div x-show="showCloudConfigModal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" style="display: none;">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" @click.away="showCloudConfigModal = false">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-base font-black text-brand-charcoal">Cloud & Google API Integration</h3>
+        <button @click="showCloudConfigModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-gray-500 mb-4">Paste your deployed Google Apps Script Web App URL below to direct all form entries to your Google Sheet, Drive, and Gmail.</p>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Google Apps Script Webhook URL</label>
+          <input type="url" x-model="cloudConfig.googleScriptUrl" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-gray-300 rounded-lg p-2 text-xs">
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Supabase Project URL</label>
+          <input type="text" x-model="cloudConfig.supabaseUrl" placeholder="https://xyz.supabase.co" class="w-full border border-gray-300 rounded-lg p-2 text-xs">
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Supabase Anon Key</label>
+          <input type="password" x-model="cloudConfig.supabaseKey" placeholder="eyJhbGciOi..." class="w-full border border-gray-300 rounded-lg p-2 text-xs">
+        </div>
+        <button @click="saveCloudConfig()" class="w-full bg-brand-emerald text-white font-bold py-2.5 rounded-xl hover:bg-brand-emeraldDark transition mt-2">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    function markazApp() {
+      return {
+        currentTab: 'home',
+        showAdmissionModal: false,
+        showHifzModal: false,
+        showReportModal: false,
+        showCloudConfigModal: false,
+        searchQuery: '',
+        filterJuz: 'ALL',
+        currentUser: null,
+        selectedStudent: null,
+
+        cloudConfig: {
+          googleScriptUrl: localStorage.getItem('mf_script_url') || '',
+          supabaseUrl: localStorage.getItem('mf_sp_url') || '',
+          supabaseKey: localStorage.getItem('mf_sp_key') || ''
+        },
+
+        admissionForm: {
+          fullName: '',
+          phone: '',
+          guardianName: '',
+          track: 'HIFZ',
+          priorJuz: 0,
+          paymentChannel: 'TELEBIRR'
+        },
+
+        newLog: {
+          studentCode: 'MF-2018-01',
+          sabaqRange: '',
+          sabqiJuz: 1,
+          manzilJuz: 30,
+          grade: 'MUMTAZ',
+          notes: ''
+        },
+
+        students: [
+          { id: 1, code: 'MF-2018-01', name: 'Abdulmalik Ahmed Mohammed', juzLevel: 28, guardianPhone: '0911223344' },
+          { id: 2, code: 'MF-2018-02', name: 'Sumayya Bilal Siyum', juzLevel: 30, guardianPhone: '0922334455' },
+          { id: 3, code: 'MF-2018-03', name: 'Hamza Kadir Ibrahim', juzLevel: 14, guardianPhone: '0933445566' },
+          { id: 4, code: 'MF-2018-04', name: 'Zubayr Usman Ali', juzLevel: 7, guardianPhone: '0944556677' },
+          { id: 5, code: 'MF-2018-05', name: 'Fathima Jibril Omar', juzLevel: 22, guardianPhone: '0955667788' }
+        ],
+
+        hifzLogs: [],
+
+        get filteredStudents() {
+          return this.students.filter(student => {
+            const matchesQuery = student.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                                 student.code.toLowerCase().includes(this.searchQuery.toLowerCase());
+            let matchesJuz = true;
+            if (this.filterJuz === 'JUZ_1_10') matchesJuz = student.juzLevel <= 10;
+            if (this.filterJuz === 'JUZ_11_20') matchesJuz = student.juzLevel > 10 && student.juzLevel <= 20;
+            if (this.filterJuz === 'JUZ_21_30') matchesJuz = student.juzLevel > 20;
+            return matchesQuery && matchesJuz;
+          });
+        },
+
+        openAuthModal() {
+          const email = prompt("Enter Mu'allim / Director Email or Google Account:", "director@markazulfurqan.edu.et");
+          if (email) {
+            this.currentUser = { name: email.split('@')[0], email: email };
+            alert("Signed in as " + email + ". Access granted to academic management.");
+          }
+        },
+
+        openStudentReport(student) {
+          this.selectedStudent = student;
+          this.showReportModal = true;
+        },
+
+        saveCloudConfig() {
+          localStorage.setItem('mf_script_url', this.cloudConfig.googleScriptUrl);
+          localStorage.setItem('mf_sp_url', this.cloudConfig.supabaseUrl);
+          localStorage.setItem('mf_sp_key', this.cloudConfig.supabaseKey);
+          this.showCloudConfigModal = false;
+          alert("Cloud endpoints saved. Sync operational.");
+        },
+
+        async submitAdmissionForm() {
+          const payload = {
+            action: 'NEW_ADMISSION',
+            ...this.admissionForm
+          };
+
+          // Optimistically add to local student roster
+          const newStudent = {
+            id: Date.now(),
+            code: 'MF-2018-0' + (this.students.length + 1),
+            name: this.admissionForm.fullName,
+            juzLevel: parseInt(this.admissionForm.priorJuz) || 1,
+            guardianPhone: this.admissionForm.phone
+          };
+          this.students.push(newStudent);
+
+          // Send to Google Apps Script Webhook if configured
+          if (this.cloudConfig.googleScriptUrl) {
+            try {
+              await fetch(this.cloudConfig.googleScriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            } catch (err) {
+              console.warn("Background cloud dispatch noted:", err);
+            }
+          }
+
+          alert("Application submitted successfully for " + this.admissionForm.fullName + "!");
+          this.showAdmissionModal = false;
+          this.admissionForm = { fullName: '', phone: '', guardianName: '', track: 'HIFZ', priorJuz: 0, paymentChannel: 'TELEBIRR' };
+        },
+
+        async submitHifzLog() {
+          const matchedStudent = this.students.find(s => s.code === this.newLog.studentCode);
+          const payload = {
+            action: 'LOG_HIFZ',
+            studentName: matchedStudent ? matchedStudent.name : '',
+            ...this.newLog
+          };
+
+          this.hifzLogs.push(payload);
+
+          if (this.cloudConfig.googleScriptUrl) {
+            try {
+              await fetch(this.cloudConfig.googleScriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            } catch (err) {
+              console.warn("Background cloud dispatch noted:", err);
+            }
+          }
+
+          alert("Sabaq & Daily Log stored for " + (matchedStudent ? matchedStudent.name : 'student') + ".");
+          this.showHifzModal = false;
+        },
+
+        exportToCSV() {
+          let csv = 'Student ID,Full Name,Current Juz,Guardian Phone\n';
+          this.students.forEach(s => {
+            csv += `"${s.code}","${s.name}","${s.juzLevel}","${s.guardianPhone}"\n`;
+          });
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", `Markazul_Furqan_Students_${new Date().toISOString().slice(0,10)}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
