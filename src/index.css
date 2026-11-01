@@ -24,25 +24,58 @@
 
 /* Professional Print Styling for Official Reports & Certificates */
 @media print {
+  @page {
+    size: landscape;
+    margin: 6mm;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body * {
     visibility: hidden;
   }
+
   #printable-report-area,
-  #printable-report-area * {
+  #printable-report-area *,
+  #printable-certificate-area,
+  #printable-certificate-area * {
     visibility: visible;
   }
+
   #printable-report-area {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 24px;
+    padding: 20px;
     background: white !important;
     color: #111827 !important;
     box-shadow: none !important;
   }
+
+  #printable-certificate-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   .no-print {
     display: none !important;
   }
 }
+

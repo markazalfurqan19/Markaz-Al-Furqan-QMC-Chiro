@@ -22,7 +22,13 @@ import {
   Calendar,
   Layers,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  TrendingUp,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  Percent,
+  FileText
 } from 'lucide-react';
 import { Student, HifzLog, AdmissionApplication, DonationPledge, CloudConfig, UserSession } from '../../types';
 import { StudentReportModal } from './StudentReportModal';
@@ -30,6 +36,11 @@ import { HifzLogModal } from './HifzLogModal';
 import { AddStudentModal } from './AddStudentModal';
 import { CertificateGenerator } from './CertificateGenerator';
 import { HifzProgressChart } from './HifzProgressChart';
+import { StudentDetailChart } from './StudentDetailChart';
+import { StudentDetailModal } from './StudentDetailModal';
+import { AttendanceModal } from './AttendanceModal';
+import { AttendanceHeatmap } from './AttendanceHeatmap';
+import { MonthlyProgressReport } from './MonthlyProgressReport';
 import { ReceiptModal } from '../ReceiptModal';
 import { OFFICIAL_LOGO_URL } from '../../data/initialData';
 
@@ -51,6 +62,7 @@ interface AcademicPortalProps {
   onImportJSON: (file: File) => void;
   onResetData: () => void;
   onShowToast?: (msg: string) => void;
+  onUpdateAttendance?: (updatedStudents: Student[]) => Promise<void> | void;
 }
 
 export const AcademicPortal: React.FC<AcademicPortalProps> = ({
@@ -70,9 +82,10 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
   onExportJSON,
   onImportJSON,
   onResetData,
-  onShowToast
+  onShowToast,
+  onUpdateAttendance
 }) => {
-  const [activeTab, setActiveTab] = useState<'ROSTER' | 'LOGS' | 'ADMISSIONS' | 'PLEDGES' | 'BACKUP'>('ROSTER');
+  const [activeTab, setActiveTab] = useState<'ROSTER' | 'LOGS' | 'REPORTS' | 'ADMISSIONS' | 'PLEDGES' | 'BACKUP'>('ROSTER');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterJuz, setFilterJuz] = useState<'ALL' | '1-10' | '11-20' | '21-30'>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
@@ -89,6 +102,12 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedPledgeForReceipt, setSelectedPledgeForReceipt] = useState<DonationPledge | null>(null);
+
+  // Student Detail View & Attendance states
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedStudentForDetail, setSelectedStudentForDetail] = useState<Student | null>(null);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -156,15 +175,47 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => handleOpenLogModal()}
-            className="bg-[#0F5132] hover:bg-[#0A3622] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5"
+            className="bg-[#0F5132] hover:bg-[#0A3622] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4 text-[#D4AF37]" />
             <span>Log Daily Sabaq</span>
           </button>
 
           <button
+            onClick={() => setShowAttendanceModal(true)}
+            className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition shadow flex items-center gap-1.5 cursor-pointer"
+            title="Take daily roll call and update students daily attendance percentage"
+          >
+            <Calendar className="w-4 h-4 text-[#D4AF37]" />
+            <span>Record Attendance</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('REPORTS')}
+            className="bg-[#0F5132] hover:bg-[#0A3622] text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition shadow flex items-center gap-1.5 cursor-pointer"
+            title="Open monthly progress summary and printable audit tables"
+          >
+            <FileText className="w-4 h-4 text-[#D4AF37]" />
+            <span>Monthly Reports</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (!selectedStudentForCert && students.length > 0) {
+                setSelectedStudentForCert(students[0]);
+              }
+              setShowCertModal(true);
+            }}
+            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-3.5 py-2.5 rounded-xl transition shadow flex items-center gap-1.5 cursor-pointer"
+            title="Generate and print official Hifz completion and milestone certificates"
+          >
+            <Award className="w-4 h-4 text-amber-200" />
+            <span>Generate Certificate</span>
+          </button>
+
+          <button
             onClick={() => setShowAddStudentModal(true)}
-            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 text-xs font-black px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5"
+            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 text-xs font-black px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5 cursor-pointer"
           >
             <Users className="w-4 h-4 text-amber-950" />
             <span>Add Student</span>
@@ -282,6 +333,18 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('REPORTS')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 shrink-0 ${
+            activeTab === 'REPORTS'
+              ? 'bg-[#0F5132] text-white shadow-sm'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <FileText className="w-4 h-4 text-[#D4AF37]" />
+          <span>Monthly Reports & Audit</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('ADMISSIONS')}
           className={`px-4 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 shrink-0 ${
             activeTab === 'ADMISSIONS'
@@ -381,7 +444,8 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
                 <tr>
                   <th className="py-3.5 px-4">Student ID</th>
                   <th className="py-3.5 px-4">Student Full Name</th>
-                  <th className="py-3.5 px-4">Current Progress</th>
+                  <th className="py-3.5 px-4">Hifz Progress</th>
+                  <th className="py-3.5 px-4">Daily Attendance</th>
                   <th className="py-3.5 px-4">Guardian Contact</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4 text-center">Actions & Documentation</th>
@@ -390,97 +454,219 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
               <tbody className="divide-y divide-gray-200">
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-400">
+                    <td colSpan={7} className="py-8 text-center text-gray-400">
                       No students found matching current filters.
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((st) => (
-                    <tr key={st.id} className="hover:bg-gray-50/80 transition">
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#0F5132]">
-                        {st.code}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-extrabold text-gray-900 text-sm">{st.name}</div>
-                        <div className="text-[11px] text-gray-500">
-                          {st.age} yrs • {st.track} • {st.currentSurah}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="bg-amber-100 text-amber-900 font-extrabold px-2.5 py-0.5 rounded-md text-[11px]">
-                            Juz {st.juzLevel} / 30
-                          </span>
-                        </div>
-                        <div className="w-24 bg-gray-200 rounded-full h-1.5 mt-1.5 overflow-hidden">
-                          <div 
-                            className="bg-[#0F5132] h-1.5 rounded-full" 
-                            style={{ width: `${Math.round((st.juzLevel / 30) * 100)}%` }}
-                          />
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-medium text-gray-800">{st.guardianName}</div>
-                        <div className="font-mono text-gray-500 text-[11px]">{st.guardianPhone}</div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-block px-2.5 py-1 text-[10px] font-black rounded-full ${
-                          st.status === 'GRADUATED'
-                            ? 'bg-purple-100 text-purple-900'
-                            : st.status === 'KHATM_TRACK'
-                            ? 'bg-amber-100 text-amber-900'
-                            : 'bg-emerald-100 text-[#0F5132]'
-                        }`}>
-                          {st.status}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          {/* Log Sabaq */}
-                          <button
-                            onClick={() => handleOpenLogModal(st)}
-                            className="bg-emerald-50 hover:bg-emerald-100 text-[#0F5132] px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-emerald-200 transition"
-                            title="Log today's Sabaq & evaluation"
-                          >
-                            <BookOpen className="w-3.5 h-3.5 inline mr-1" />
-                            Log Sabaq
-                          </button>
+                  filteredStudents.map((st) => {
+                    const isExpanded = expandedStudentId === st.id;
+                    return (
+                      <React.Fragment key={st.id}>
+                        <tr className={`hover:bg-gray-50/80 transition ${isExpanded ? 'bg-emerald-50/40 border-l-4 border-l-[#0F5132]' : ''}`}>
+                          <td className="py-3.5 px-4">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedStudentId(isExpanded ? null : st.id)}
+                              className="flex items-center gap-1.5 font-mono font-bold text-[#0F5132] hover:text-[#0A3622] group cursor-pointer text-left"
+                              title="Click to toggle in-table Student Detail & Progress Curve"
+                            >
+                              {isExpanded ? (
+                                <ChevronUp className="w-3.5 h-3.5 text-[#0F5132]" />
+                              ) : (
+                                <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#0F5132]" />
+                              )}
+                              <span>{st.code}</span>
+                            </button>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedStudentForDetail(st);
+                                setShowDetailModal(true);
+                              }}
+                              className="text-left group cursor-pointer"
+                              title="Click to open full student detail view"
+                            >
+                              <div className="font-extrabold text-gray-900 text-sm group-hover:text-[#0F5132] transition">
+                                {st.name}
+                              </div>
+                              <div className="text-[11px] text-gray-500">
+                                {st.age} yrs • {st.track} • {st.currentSurah}
+                              </div>
+                            </button>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="bg-amber-100 text-amber-900 font-extrabold px-2.5 py-0.5 rounded-md text-[11px]">
+                                Juz {st.juzLevel} / 30
+                              </span>
+                            </div>
+                            <div className="w-24 bg-gray-200 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                              <div 
+                                className="bg-[#0F5132] h-1.5 rounded-full" 
+                                style={{ width: `${Math.round((st.juzLevel / 30) * 100)}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`font-black text-xs ${
+                                st.dailyAttendance >= 95 
+                                  ? 'text-emerald-800' 
+                                  : st.dailyAttendance >= 85 
+                                  ? 'text-amber-800' 
+                                  : 'text-red-700'
+                              }`}>
+                                {st.dailyAttendance}%
+                              </span>
+                              <div className="w-16 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div 
+                                  className={`h-1.5 rounded-full ${
+                                    st.dailyAttendance >= 95 
+                                      ? 'bg-emerald-600' 
+                                      : st.dailyAttendance >= 85 
+                                      ? 'bg-amber-500' 
+                                      : 'bg-red-500'
+                                  }`} 
+                                  style={{ width: `${st.dailyAttendance}%` }} 
+                                />
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-gray-400 block mt-0.5">Halaqah Roll</span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="font-medium text-gray-800">{st.guardianName}</div>
+                            <div className="font-mono text-gray-500 text-[11px]">{st.guardianPhone}</div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className={`inline-block px-2.5 py-1 text-[10px] font-black rounded-full ${
+                              st.status === 'GRADUATED'
+                                ? 'bg-purple-100 text-purple-900'
+                                : st.status === 'KHATM_TRACK'
+                                ? 'bg-amber-100 text-amber-900'
+                                : 'bg-emerald-100 text-[#0F5132]'
+                            }`}>
+                              {st.status}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              {/* Open Student Detail View & Recharts Line Graph */}
+                              <button
+                                onClick={() => {
+                                  setSelectedStudentForDetail(st);
+                                  setShowDetailModal(true);
+                                }}
+                                className="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer"
+                                title="Open student detail view with Hifz progress line graph"
+                              >
+                                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Detail & Graph</span>
+                              </button>
 
-                          {/* Print Transcript / Report Card */}
-                          <button
-                            onClick={() => handleOpenReportModal(st)}
-                            className="bg-[#0F5132] hover:bg-[#0A3622] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs"
-                            title="Generate official printable transcript"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                            <span>Report Card</span>
-                          </button>
+                              {/* Log Sabaq */}
+                              <button
+                                onClick={() => handleOpenLogModal(st)}
+                                className="bg-emerald-50 hover:bg-emerald-100 text-[#0F5132] px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-emerald-200 transition cursor-pointer"
+                                title="Log today's Sabaq & evaluation"
+                              >
+                                <BookOpen className="w-3.5 h-3.5 inline mr-1" />
+                                Log Sabaq
+                              </button>
 
-                          {/* Print Hifz Completion Certificate */}
-                          <button
-                            onClick={() => {
-                              setSelectedStudentForCert(st);
-                              setShowCertModal(true);
-                            }}
-                            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shadow-xs"
-                            title="Generate and print official Hifz completion certificate"
-                          >
-                            <Award className="w-3.5 h-3.5 text-amber-950" />
-                            <span>Print Certificate</span>
-                          </button>
+                              {/* Print Transcript / Report Card */}
+                              <button
+                                onClick={() => handleOpenReportModal(st)}
+                                className="bg-[#0F5132] hover:bg-[#0A3622] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer"
+                                title="Generate official printable transcript"
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                                <span>Report</span>
+                              </button>
 
-                          {/* Delete Student */}
-                          <button
-                            onClick={() => setStudentToDelete(st)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg transition"
-                            title="Remove student"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                              {/* Print Hifz Completion Certificate */}
+                              <button
+                                onClick={() => {
+                                  setSelectedStudentForCert(st);
+                                  setShowCertModal(true);
+                                }}
+                                className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shadow-xs cursor-pointer"
+                                title="Generate and print official Hifz completion certificate"
+                              >
+                                <Award className="w-3.5 h-3.5 text-amber-950" />
+                                <span>Certificate</span>
+                              </button>
+
+                              {/* Delete Student */}
+                              <button
+                                onClick={() => setStudentToDelete(st)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg transition cursor-pointer"
+                                title="Remove student"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Expandable In-Table Student Detail View */}
+                        {isExpanded && (
+                          <tr className="bg-gradient-to-r from-emerald-50/50 via-white to-gray-50/50 border-b-2 border-emerald-200">
+                            <td colSpan={7} className="p-4 sm:p-6 animate-fadeIn">
+                              <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="font-mono text-xs font-bold text-[#0F5132] bg-emerald-100 px-2.5 py-1 rounded-lg">
+                                      {st.code}
+                                    </span>
+                                    <h4 className="text-sm sm:text-base font-black text-gray-900">
+                                      Student Detail & Hifz Velocity: {st.name}
+                                    </h4>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedStudentForDetail(st);
+                                        setShowDetailModal(true);
+                                      }}
+                                      className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-1"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                      <span>Open Full Dossier Modal</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedStudentId(null)}
+                                      className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+                                    >
+                                      <ChevronUp className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Recharts Single Student Line Graph */}
+                                <StudentDetailChart
+                                  student={st}
+                                  hifzLogs={hifzLogs}
+                                  height={240}
+                                  showCardWrapper={false}
+                                />
+
+                                {/* 30-Day Attendance Heatmap & Pattern Audit */}
+                                <div className="pt-2">
+                                  <AttendanceHeatmap student={st} />
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -574,7 +760,24 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
         </div>
       )}
 
-      {/* ================= TAB 3: ADMISSIONS REVIEW ================= */}
+      {/* ================= TAB 3: MONTHLY PROGRESS & AUDIT REPORTS ================= */}
+      {activeTab === 'REPORTS' && (
+        <MonthlyProgressReport
+          students={students}
+          hifzLogs={hifzLogs}
+          onSelectStudent={(st) => {
+            setSelectedStudentForDetail(st);
+            setShowDetailModal(true);
+          }}
+          onOpenReportModal={(st) => handleOpenReportModal(st)}
+          onOpenCertModal={(st) => {
+            setSelectedStudentForCert(st);
+            setShowCertModal(true);
+          }}
+        />
+      )}
+
+      {/* ================= TAB 4: ADMISSIONS REVIEW ================= */}
       {activeTab === 'ADMISSIONS' && (
         <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden no-print">
           <div className="p-5 border-b border-gray-200">
@@ -867,6 +1070,8 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
           setSelectedStudentForCert(null);
         }}
         student={selectedStudentForCert}
+        students={students}
+        onSelectStudent={(st) => setSelectedStudentForCert(st)}
       />
 
       <ReceiptModal
@@ -876,6 +1081,35 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
           setSelectedPledgeForReceipt(null);
         }}
         pledge={selectedPledgeForReceipt}
+      />
+
+      <StudentDetailModal
+        isOpen={showDetailModal}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedStudentForDetail(null);
+        }}
+        student={selectedStudentForDetail}
+        hifzLogs={hifzLogs}
+        onOpenLogModal={(st) => handleOpenLogModal(st)}
+        onOpenReportModal={(st) => handleOpenReportModal(st)}
+        onOpenCertModal={(st) => {
+          setSelectedStudentForCert(st);
+          setShowCertModal(true);
+        }}
+        onOpenAttendanceModal={() => setShowAttendanceModal(true)}
+      />
+
+      <AttendanceModal
+        isOpen={showAttendanceModal}
+        onClose={() => setShowAttendanceModal(false)}
+        students={students}
+        onSaveAttendance={async (updated) => {
+          if (onUpdateAttendance) {
+            await onUpdateAttendance(updated);
+          }
+          onShowToast?.('Daily attendance successfully recorded and recalculated!');
+        }}
       />
 
       {/* Custom In-App Delete Student Confirmation Modal */}

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Student, HifzLog } from '../../types';
 import { OFFICIAL_LOGO_URL } from '../../data/initialData';
+import { StudentDetailChart } from './StudentDetailChart';
 
 interface StudentReportModalProps {
   isOpen: boolean;
@@ -215,6 +216,16 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
                   </tr>
                 </tbody>
               </table>
+
+              {/* Recharts Student Hifz Progress Curve */}
+              <div className="mb-6 p-4 bg-gray-50/80 rounded-2xl border border-gray-200">
+                <StudentDetailChart
+                  student={student}
+                  hifzLogs={studentLogs}
+                  height={220}
+                  showCardWrapper={false}
+                />
+              </div>
 
               {/* Recent Daily Logs if available */}
               {studentLogs.length > 0 && (

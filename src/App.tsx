@@ -235,6 +235,20 @@ export default function App() {
     showToast('Student removed from active roster.');
   };
 
+  // Update Student Attendance
+  const handleUpdateAttendance = async (updatedStudents: Student[]) => {
+    setStudents(updatedStudents);
+    localStorage.setItem('mf_students', JSON.stringify(updatedStudents));
+
+    try {
+      for (const st of updatedStudents) {
+        await setDoc(doc(db, 'students', st.id), st);
+      }
+    } catch (e) {
+      console.warn('Firestore attendance write note:', e);
+    }
+  };
+
   // Add Hifz Log
   const handleAddHifzLog = async (logData: Omit<HifzLog, 'id' | 'date'>) => {
     const newLog: HifzLog = {
@@ -501,6 +515,7 @@ export default function App() {
             onImportJSON={handleImportJSON}
             onResetData={handleResetData}
             onShowToast={showToast}
+            onUpdateAttendance={handleUpdateAttendance}
           />
         )}
       </main>
