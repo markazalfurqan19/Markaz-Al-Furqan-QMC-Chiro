@@ -10,13 +10,15 @@ import {
   AdmissionApplication, 
   DonationPledge, 
   CloudConfig, 
-  UserSession 
+  UserSession,
+  SiteContentConfig
 } from './types';
 import { 
   INITIAL_STUDENTS, 
   INITIAL_LOGS, 
   INITIAL_ADMISSIONS, 
-  INITIAL_PLEDGES 
+  INITIAL_PLEDGES,
+  DEFAULT_SITE_CONTENT
 } from './data/initialData';
 
 import { Header } from './components/Header';
@@ -33,11 +35,29 @@ import { AdmissionModal } from './components/AdmissionModal';
 import { PledgeModal } from './components/PledgeModal';
 import { CloudConfigModal } from './components/CloudConfigModal';
 import { AuthModal } from './components/AuthModal';
+import { OwnerEditModal } from './components/OwnerEditModal';
 import { AcademicPortal } from './components/portal/AcademicPortal';
+import { db, testFirestoreConnection } from './lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Edit3 } from 'lucide-react';
 
 export default function App() {
   // Navigation tab: 'home' | 'portal'
   const [currentTab, setCurrentTab] = useState<'home' | 'portal'>('home');
+
+  // Owner live editing mode state
+  const [isOwnerMode, setIsOwnerMode] = useState<boolean>(() => {
+    return localStorage.getItem('mf_owner_mode') === 'true';
+  });
+
+  const [showOwnerEditModal, setShowOwnerEditModal] = useState(false);
+  const [ownerEditInitialTab, setOwnerEditInitialTab] = useState<'HERO' | 'CAMPAIGN' | 'DIRECTOR' | 'CONTACT'>('HERO');
+
+  // Live Website Content state
+  const [siteContent, setSiteContent] = useState<SiteContentConfig>(() => {
+    const saved = localStorage.getItem('mf_site_content');
+    return saved ? JSON.parse(saved) : DEFAULT_SITE_CONTENT;
+  });
 
   // Data states with localStorage persistence
   const [students, setStudents] = useState<Student[]>(() => {
@@ -80,6 +100,14 @@ export default function App() {
   const [showCloudConfigModal, setShowCloudConfigModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Toast notification state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('mf_students', JSON.stringify(students));
@@ -102,12 +130,65 @@ export default function App() {
   }, [cloudConfig]);
 
   useEffect(() => {
+    localStorage.setItem('mf_owner_mode', String(isOwnerMode));
+  }, [isOwnerMode]);
+
+  useEffect(() => {
+    localStorage.setItem('mf_site_content', JSON.stringify(siteContent));
+  }, [siteContent]);
+
+  useEffect(() => {
     if (currentUser) {
       localStorage.setItem('mf_user', JSON.stringify(currentUser));
     } else {
       localStorage.removeItem('mf_user');
     }
   }, [currentUser]);
+
+  // Check Firestore connection and load any remote site configuration
+  useEffect(() => {
+    testFirestoreConnection();
+
+    // Attempt to load live site config from Firestore if available
+    const loadRemoteConfig = async () => {
+      try {
+        const docRef = doc(db, 'site_config', 'main');
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          setSiteContent(snap.data() as SiteContentConfig);
+        }
+      } catch (err) {
+        // Fallback gracefully to local storage
+      }
+    };
+    loadRemoteConfig();
+  }, []);
+
+  // Save Site Content
+  const handleSaveSiteContent = async (newContent: SiteContentConfig) => {
+    setSiteContent(newContent);
+    try {
+      // Persist to Firestore
+      const docRef = doc(db, 'site_config', 'main');
+      await setDoc(docRef, newContent, { merge: true });
+    } catch (err) {
+      console.warn('Firestore sync note:', err);
+    }
+    showToast('Website content updated and published live!');
+  };
+
+  // Reset Site Content
+  const handleResetSiteContent = () => {
+    setSiteContent(DEFAULT_SITE_CONTENT);
+    localStorage.removeItem('mf_site_content');
+    showToast('Website content restored to default!');
+    setShowOwnerEditModal(false);
+  };
+
+  const openEditorAtTab = (tab: 'HERO' | 'CAMPAIGN' | 'DIRECTOR' | 'CONTACT') => {
+    setOwnerEditInitialTab(tab);
+    setShowOwnerEditModal(true);
+  };
 
   // Background Webhook Dispatch
   const dispatchToCloudWebhook = async (payload: any) => {
@@ -132,16 +213,26 @@ export default function App() {
       dailyAttendance: 96
     };
     setStudents(prev => [newStudent, ...prev]);
+
+    // Save to Firestore
+    try {
+      await setDoc(doc(db, 'students', newStudent.id), newStudent);
+    } catch (e) {
+      console.warn('Firestore write note:', e);
+    }
+
     await dispatchToCloudWebhook({
       action: 'NEW_STUDENT_ENROLLED',
       student: newStudent,
       timestamp: new Date().toISOString()
     });
+    showToast(`Student ${newStudent.name} registered successfully!`);
   };
 
   // Delete student
   const handleDeleteStudent = (id: string) => {
     setStudents(prev => prev.filter(s => s.id !== id));
+    showToast('Student removed from active roster.');
   };
 
   // Add Hifz Log
@@ -154,7 +245,7 @@ export default function App() {
 
     setHifzLogs(prev => [newLog, ...prev]);
 
-    // Update current student's focus if needed
+    // Update current student's focus
     setStudents(prev => prev.map(st => {
       if (st.code === logData.studentCode) {
         return {
@@ -165,10 +256,18 @@ export default function App() {
       return st;
     }));
 
+    // Save to Firestore
+    try {
+      await setDoc(doc(db, 'hifz_logs', newLog.id), newLog);
+    } catch (e) {
+      console.warn('Firestore write note:', e);
+    }
+
     await dispatchToCloudWebhook({
       action: 'LOG_HIFZ',
       ...newLog
     });
+    showToast(`Sabaq logged for ${newLog.studentName}!`);
   };
 
   // Handle Admission Submission
@@ -182,7 +281,7 @@ export default function App() {
 
     setAdmissions(prev => [newAdm, ...prev]);
 
-    // Also optimistically enroll as candidate student into the roster
+    // Also enroll as candidate student into the roster
     const candidateCode = `MF-2018-${String(students.length + 1).padStart(2, '0')}`;
     const newStudent: Student = {
       id: 'st-' + Date.now(),
@@ -201,16 +300,26 @@ export default function App() {
     };
     setStudents(prev => [newStudent, ...prev]);
 
+    // Save to Firestore
+    try {
+      await setDoc(doc(db, 'admissions', newAdm.id), newAdm);
+      await setDoc(doc(db, 'students', newStudent.id), newStudent);
+    } catch (e) {
+      console.warn('Firestore write note:', e);
+    }
+
     await dispatchToCloudWebhook({
       action: 'NEW_ADMISSION',
       ...newAdm,
       assignedCode: candidateCode
     });
+    showToast(`Application submitted for ${formData.fullName}!`);
   };
 
   // Approve Admission Application
   const handleApproveAdmission = (admissionId: string) => {
     setAdmissions(prev => prev.map(a => a.id === admissionId ? { ...a, status: 'APPROVED' } : a));
+    showToast('Application approved and enrolled!');
   };
 
   // Handle Donation Pledge
@@ -223,10 +332,18 @@ export default function App() {
     };
     setPledges(prev => [newPledge, ...prev]);
 
+    // Save to Firestore
+    try {
+      await setDoc(doc(db, 'pledges', newPledge.id), newPledge);
+    } catch (e) {
+      console.warn('Firestore write note:', e);
+    }
+
     await dispatchToCloudWebhook({
       action: 'DONATION_PLEDGE',
       ...newPledge
     });
+    showToast(`Pledge of ETB ${newPledge.amountETB.toLocaleString()} recorded!`);
   };
 
   // Export CSV
@@ -242,6 +359,7 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showToast('CSV export downloaded!');
   };
 
   // Export JSON Full Backup
@@ -250,6 +368,7 @@ export default function App() {
       version: '1.0',
       exportedAt: new Date().toISOString(),
       institution: 'Markazul Furqan Quran Memorization Center - Chiro, Ethiopia',
+      siteContent,
       students,
       hifzLogs,
       admissions,
@@ -263,14 +382,7 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  // Toast notification state
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    showToast('JSON backup archive downloaded!');
   };
 
   // Import JSON Backup
@@ -279,18 +391,11 @@ export default function App() {
     reader.onload = (e) => {
       try {
         const parsed = JSON.parse(e.target?.result as string);
-        if (parsed.students && Array.isArray(parsed.students)) {
-          setStudents(parsed.students);
-        }
-        if (parsed.hifzLogs && Array.isArray(parsed.hifzLogs)) {
-          setHifzLogs(parsed.hifzLogs);
-        }
-        if (parsed.admissions && Array.isArray(parsed.admissions)) {
-          setAdmissions(parsed.admissions);
-        }
-        if (parsed.pledges && Array.isArray(parsed.pledges)) {
-          setPledges(parsed.pledges);
-        }
+        if (parsed.siteContent) setSiteContent(parsed.siteContent);
+        if (parsed.students && Array.isArray(parsed.students)) setStudents(parsed.students);
+        if (parsed.hifzLogs && Array.isArray(parsed.hifzLogs)) setHifzLogs(parsed.hifzLogs);
+        if (parsed.admissions && Array.isArray(parsed.admissions)) setAdmissions(parsed.admissions);
+        if (parsed.pledges && Array.isArray(parsed.pledges)) setPledges(parsed.pledges);
         showToast('Data successfully restored from backup file!');
       } catch (err) {
         showToast('Invalid JSON file format. Please check the file.');
@@ -305,10 +410,13 @@ export default function App() {
     setHifzLogs(INITIAL_LOGS);
     setAdmissions(INITIAL_ADMISSIONS);
     setPledges(INITIAL_PLEDGES);
+    setSiteContent(DEFAULT_SITE_CONTENT);
     localStorage.removeItem('mf_students');
     localStorage.removeItem('mf_hifz_logs');
     localStorage.removeItem('mf_admissions');
     localStorage.removeItem('mf_pledges');
+    localStorage.removeItem('mf_site_content');
+    showToast('Reset to demo records.');
   };
 
   return (
@@ -322,6 +430,12 @@ export default function App() {
         onLogout={() => setCurrentUser(null)}
         onOpenCloudConfig={() => setShowCloudConfigModal(true)}
         onOpenAdmission={() => setShowAdmissionModal(true)}
+        isOwnerMode={isOwnerMode}
+        onToggleOwnerMode={() => {
+          setIsOwnerMode(!isOwnerMode);
+          showToast(!isOwnerMode ? 'Owner Editing Mode Enabled! Edit buttons are active.' : 'Owner Editing Mode Disabled.');
+        }}
+        onOpenOwnerEdit={() => openEditorAtTab('HERO')}
       />
 
       {/* 2. BODY CONTENT (PUBLIC OR PORTAL) */}
@@ -335,6 +449,9 @@ export default function App() {
                 const el = document.getElementById('campaign');
                 el?.scrollIntoView({ behavior: 'smooth' });
               }}
+              siteContent={siteContent}
+              isOwnerMode={isOwnerMode}
+              onEditHero={() => openEditorAtTab('HERO')}
             />
 
             <StatsBanner totalStudents={students.length} />
@@ -342,6 +459,9 @@ export default function App() {
             <Vision2030
               onOpenPledgeModal={() => setShowPledgeModal(true)}
               pledges={pledges}
+              siteContent={siteContent}
+              isOwnerMode={isOwnerMode}
+              onEditCampaign={() => openEditorAtTab('CAMPAIGN')}
             />
 
             <Curriculum
@@ -350,9 +470,17 @@ export default function App() {
 
             <QuranReference />
 
-            <Leadership />
+            <Leadership
+              siteContent={siteContent}
+              isOwnerMode={isOwnerMode}
+              onEditLeadership={() => openEditorAtTab('DIRECTOR')}
+            />
 
-            <ContactSection />
+            <ContactSection
+              siteContent={siteContent}
+              isOwnerMode={isOwnerMode}
+              onEditContact={() => openEditorAtTab('CONTACT')}
+            />
           </>
         ) : (
           <AcademicPortal
@@ -372,6 +500,7 @@ export default function App() {
             onExportJSON={handleExportJSON}
             onImportJSON={handleImportJSON}
             onResetData={handleResetData}
+            onShowToast={showToast}
           />
         )}
       </main>
@@ -409,8 +538,52 @@ export default function App() {
         onLogin={(user) => {
           setCurrentUser(user);
           setCurrentTab('portal');
+          showToast(`Welcome, ${user.name}!`);
         }}
       />
+
+      <OwnerEditModal
+        isOpen={showOwnerEditModal}
+        onClose={() => setShowOwnerEditModal(false)}
+        siteContent={siteContent}
+        onSave={handleSaveSiteContent}
+        onReset={handleResetSiteContent}
+        initialTab={ownerEditInitialTab}
+      />
+
+      {/* Persistent Floating Owner Controls (no-print) */}
+      <div className="fixed bottom-6 left-6 z-40 no-print flex flex-col sm:flex-row items-start sm:items-center gap-2">
+        <button
+          onClick={() => {
+            const next = !isOwnerMode;
+            setIsOwnerMode(next);
+            localStorage.setItem('mf_owner_mode', String(next));
+            showToast(next ? 'Owner Editing Mode Enabled! Edit buttons now visible.' : 'Owner Editing Mode Disabled');
+          }}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full text-xs font-black shadow-2xl transition border cursor-pointer ${
+            isOwnerMode
+              ? 'bg-[#D4AF37] text-gray-950 border-amber-300 ring-2 ring-amber-300 ring-offset-2'
+              : 'bg-[#0A3622] hover:bg-[#0F5132] text-[#D4AF37] border-[#D4AF37]/50'
+          }`}
+          title="Toggle Owner Website Editing Mode"
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>{isOwnerMode ? 'Owner Editing: ACTIVE' : 'Owner Edit Mode'}</span>
+        </button>
+
+        {isOwnerMode && (
+          <button
+            onClick={() => {
+              setOwnerEditInitialTab('HERO');
+              setShowOwnerEditModal(true);
+            }}
+            className="flex items-center gap-1 px-3.5 py-2 rounded-full text-xs font-black bg-white text-emerald-900 border border-emerald-300 shadow-xl hover:bg-emerald-50 transition cursor-pointer"
+            title="Open Complete Website Content Editor"
+          >
+            <span>Edit Site Content</span>
+          </button>
+        )}
+      </div>
 
       {/* Floating Toast Notification */}
       {toastMessage && (

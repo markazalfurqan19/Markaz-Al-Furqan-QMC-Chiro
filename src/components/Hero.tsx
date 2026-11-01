@@ -5,53 +5,79 @@ import {
   HeartHandshake, 
   Award, 
   ShieldCheck, 
-  Sparkles,
-  BookMarked
+  Sparkles, 
+  BookMarked,
+  Edit3
 } from 'lucide-react';
+import { SiteContentConfig } from '../types';
 
 interface HeroProps {
   onOpenAdmission: () => void;
   onGoToPortal: () => void;
   onGoToCampaign: () => void;
+  siteContent?: SiteContentConfig;
+  isOwnerMode?: boolean;
+  onEditHero?: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({
   onOpenAdmission,
   onGoToPortal,
-  onGoToCampaign
+  onGoToCampaign,
+  siteContent,
+  isOwnerMode,
+  onEditHero
 }) => {
+  const badgeText = siteContent?.heroBadge || 'Vision 2030 Regional Excellence • Chiro, Ethiopia';
+  const headline = siteContent?.heroTitle || 'Preserving the Divine Words with Precision & Character';
+  const subText = siteContent?.heroSub || 'Markazul Furqan in Chiro provides rigorous Sabaq, Sabqi, and Manzil instruction, authentic Tajweed, and comprehensive Arabic language under the direct leadership of Ustaz Kadir Hamza Siyum.';
+  const quranArabic = siteContent?.quranAyahArabic || 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ • وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا';
+  const quranTrans = siteContent?.quranAyahTranslation || '"And recite the Qur\'an with measured, rhythmic recitation." — Surah Al-Muzzammil (73:4)';
+
   return (
     <section className="islamic-pattern text-white py-20 px-4 sm:px-8 relative overflow-hidden border-b border-[#D4AF37]/30">
       {/* Decorative gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 pointer-events-none" />
 
+      {/* Owner Edit Floating Button */}
+      {isOwnerMode && (
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={onEditHero}
+            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-3.5 py-1.5 rounded-full text-xs font-black shadow-lg flex items-center gap-1.5 transition transform hover:scale-105"
+            title="Edit Hero text and Quranic verse"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Edit Hero Section</span>
+          </button>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto text-center relative z-10">
         {/* Regional Excellence Badge */}
         <div className="inline-flex items-center gap-2 bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wider backdrop-blur-sm shadow-sm">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Vision 2030 Regional Excellence • Chiro, Ethiopia</span>
+          <span>{badgeText}</span>
         </div>
 
         {/* Main Title */}
         <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
-          Preserving the Divine Words with <span className="text-[#D4AF37]">Precision</span> & Character
+          {headline}
         </h2>
 
         {/* Sacred Arabic Quranic Inscription */}
         <div className="my-6 py-3 px-4 bg-emerald-950/40 rounded-2xl border border-[#D4AF37]/30 inline-block max-w-2xl backdrop-blur-sm">
           <p className="font-quran text-2xl sm:text-3xl md:text-4xl text-[#D4AF37] leading-relaxed select-none">
-            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ • وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا
+            {quranArabic}
           </p>
           <p className="text-xs sm:text-sm text-emerald-200 mt-1 italic">
-            "And recite the Qur'an with measured, rhythmic recitation." — Surah Al-Muzzammil (73:4)
+            {quranTrans}
           </p>
         </div>
 
         {/* Overview Description */}
         <p className="text-sm sm:text-base md:text-lg text-emerald-100/90 max-w-3xl mx-auto mb-8 font-normal leading-relaxed">
-          Markazul Furqan in Chiro provides rigorous <strong>Sabaq</strong>, <strong>Sabqi</strong>, and <strong>Manzil</strong> instruction,
-          mastery of Tajweed phonetics, and classical Arabic morphology under the personal mentorship and leadership of{' '}
-          <strong className="text-white underline decoration-[#D4AF37]">Ustaz Kadir Hamza Siyum</strong>.
+          {subText}
         </p>
 
         {/* Action Buttons */}

@@ -7,18 +7,25 @@ import {
   Heart, 
   PhoneCall, 
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Edit3
 } from 'lucide-react';
-import { DonationPledge } from '../types';
+import { DonationPledge, SiteContentConfig } from '../types';
 
 interface Vision2030Props {
   onOpenPledgeModal: () => void;
   pledges: DonationPledge[];
+  siteContent?: SiteContentConfig;
+  isOwnerMode?: boolean;
+  onEditCampaign?: () => void;
 }
 
 export const Vision2030: React.FC<Vision2030Props> = ({ 
   onOpenPledgeModal,
-  pledges 
+  pledges,
+  siteContent,
+  isOwnerMode,
+  onEditCampaign
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -28,15 +35,36 @@ export const Vision2030: React.FC<Vision2030Props> = ({
     setTimeout(() => setCopiedKey(null), 2500);
   };
 
-  const targetAmount = 4500000;
-  // Calculate dynamic total including initial 1,890,000 plus any confirmed pledges in session
+  const targetAmount = siteContent?.targetAmountETB || 4500000;
+  const baseCollected = siteContent?.baseCollectedETB || 1890000;
+  const studentSponsorshipPrice = siteContent?.studentSponsorshipETB || 12000;
+  const classroomPrice = siteContent?.classroomEndowmentETB || 150000;
+  const telebirrNum = siteContent?.telebirrNumber || '+251935097339';
+  const cbeAcc = siteContent?.cbeAccount || '1000123456789';
+  const awashAcc = siteContent?.awashAccount || '01320495830200';
+
+  // Calculate dynamic total including initial base plus any confirmed pledges in session
   const additionalPledges = pledges.reduce((acc, p) => acc + (p.isConfirmed ? p.amountETB : 0), 0);
-  const totalCollected = 1890000 + additionalPledges;
+  const totalCollected = baseCollected + additionalPledges;
   const progressPercent = Math.min(100, Math.round((totalCollected / targetAmount) * 100));
   const remainingAmount = Math.max(0, targetAmount - totalCollected);
 
   return (
-    <section id="campaign" className="py-20 px-4 sm:px-8 bg-white border-b border-gray-200">
+    <section id="campaign" className="py-20 px-4 sm:px-8 bg-white border-b border-gray-200 relative">
+      {/* Owner Edit Floating Button */}
+      {isOwnerMode && (
+        <div className="max-w-6xl mx-auto flex justify-end mb-4">
+          <button
+            onClick={onEditCampaign}
+            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-3.5 py-1.5 rounded-full text-xs font-black shadow-md flex items-center gap-1.5 transition transform hover:scale-105"
+            title="Edit Campaign target amounts and banking details"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Edit Campaign & Banking Details</span>
+          </button>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 bg-emerald-100 text-[#0F5132] text-xs font-extrabold px-3.5 py-1.5 rounded-full mb-3 uppercase tracking-wider">
@@ -70,7 +98,7 @@ export const Vision2030: React.FC<Vision2030Props> = ({
                 Total Phase 1 Target
               </span>
               <div className="text-2xl sm:text-3xl font-black text-[#0F5132]">
-                ETB 4,500,000
+                ETB {targetAmount.toLocaleString()}
               </div>
             </div>
           </div>
@@ -106,7 +134,7 @@ export const Vision2030: React.FC<Vision2030Props> = ({
                 </div>
                 <h5 className="font-extrabold text-gray-900 text-base">Hafiz Sponsorship</h5>
                 <div className="text-xl font-black text-[#0F5132] my-2">
-                  ETB 12,000 <span className="text-xs font-medium text-gray-500">/ Year</span>
+                  ETB {studentSponsorshipPrice.toLocaleString()} <span className="text-xs font-medium text-gray-500">/ Year</span>
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed">
                   Covers complete annual tuition, authentic Mus'haf copies, boarding, and daily teacher supervision for 1 student.
@@ -133,9 +161,9 @@ export const Vision2030: React.FC<Vision2030Props> = ({
                   </span>
                   <Building2 className="w-4 h-4 text-amber-600" />
                 </div>
-                <h5 className="font-extrabold text-gray-900 text-base">Classroom Block Block</h5>
+                <h5 className="font-extrabold text-gray-900 text-base">Classroom Endowment</h5>
                 <div className="text-xl font-black text-amber-900 my-2">
-                  ETB 150,000 <span className="text-xs font-medium text-gray-500">/ Unit</span>
+                  ETB {classroomPrice.toLocaleString()} <span className="text-xs font-medium text-gray-500">/ Unit</span>
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed">
                   Furnish an entire Halaqah room with acoustic wall panels, ergonomic Quran rehal stands, and lighting.
@@ -168,10 +196,10 @@ export const Vision2030: React.FC<Vision2030Props> = ({
                   <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
                     <div>
                       <span className="font-bold text-gray-800 block">CBE Account:</span>
-                      <span className="font-mono text-gray-900 font-semibold">1000123456789</span>
+                      <span className="font-mono text-gray-900 font-semibold">{cbeAcc}</span>
                     </div>
                     <button
-                      onClick={() => copyToClipboard('1000123456789', 'cbe')}
+                      onClick={() => copyToClipboard(cbeAcc, 'cbe')}
                       className="p-1.5 text-gray-500 hover:text-[#0F5132] transition"
                       title="Copy CBE Account"
                     >
@@ -182,11 +210,11 @@ export const Vision2030: React.FC<Vision2030Props> = ({
                   {/* Telebirr */}
                   <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
                     <div>
-                      <span className="font-bold text-gray-800 block">Telebirr Merchant:</span>
-                      <span className="font-mono text-gray-900 font-semibold">0912 34 56 78</span>
+                      <span className="font-bold text-gray-800 block">Telebirr / Phone:</span>
+                      <span className="font-mono text-gray-900 font-semibold">{telebirrNum}</span>
                     </div>
                     <button
-                      onClick={() => copyToClipboard('0912345678', 'telebirr')}
+                      onClick={() => copyToClipboard(telebirrNum, 'telebirr')}
                       className="p-1.5 text-gray-500 hover:text-[#0F5132] transition"
                       title="Copy Telebirr Number"
                     >
@@ -198,10 +226,10 @@ export const Vision2030: React.FC<Vision2030Props> = ({
                   <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
                     <div>
                       <span className="font-bold text-gray-800 block">Awash Bank:</span>
-                      <span className="font-mono text-gray-900 font-semibold">01320495830200</span>
+                      <span className="font-mono text-gray-900 font-semibold">{awashAcc}</span>
                     </div>
                     <button
-                      onClick={() => copyToClipboard('01320495830200', 'awash')}
+                      onClick={() => copyToClipboard(awashAcc, 'awash')}
                       className="p-1.5 text-gray-500 hover:text-[#0F5132] transition"
                       title="Copy Awash Bank Account"
                     >

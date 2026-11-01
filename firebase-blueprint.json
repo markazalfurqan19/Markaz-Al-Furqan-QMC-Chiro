@@ -1,0 +1,114 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Quran memorization student at Markazul Furqan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "age": { "type": "number" },
+        "guardianName": { "type": "string" },
+        "guardianPhone": { "type": "string" },
+        "juzLevel": { "type": "number" },
+        "currentSurah": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "REVISION", "KHATM_TRACK", "GRADUATED"] },
+        "enrollmentDate": { "type": "string" },
+        "track": { "type": "string", "enum": ["HIFZ", "TAJWEED", "ARABIC", "WEEKEND"] },
+        "dailyAttendance": { "type": "number" },
+        "notes": { "type": "string" }
+      },
+      "required": ["code", "name", "guardianPhone", "juzLevel", "track", "status"]
+    },
+    "HifzLog": {
+      "title": "HifzLog",
+      "description": "Daily Sabaq, Sabqi, and Manzil recitation audit log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentCode": { "type": "string" },
+        "studentName": { "type": "string" },
+        "date": { "type": "string" },
+        "sabaqRange": { "type": "string" },
+        "sabqiJuz": { "type": "number" },
+        "manzilJuz": { "type": "number" },
+        "grade": { "type": "string", "enum": ["MUMTAZ", "JAYYID_JIDDAN", "JAYYID", "MAQBUL"] },
+        "notes": { "type": "string" },
+        "muallimName": { "type": "string" }
+      },
+      "required": ["studentCode", "studentName", "date", "sabaqRange", "sabqiJuz", "manzilJuz", "grade"]
+    },
+    "Admission": {
+      "title": "Admission",
+      "description": "Student admission application for Markazul Furqan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "guardianName": { "type": "string" },
+        "track": { "type": "string", "enum": ["HIFZ", "TAJWEED", "ARABIC", "WEEKEND"] },
+        "priorJuz": { "type": "number" },
+        "paymentChannel": { "type": "string", "enum": ["TELEBIRR", "CBE", "AWASH", "CASH"] },
+        "submissionDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "CONTACTED"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["fullName", "phone", "guardianName", "track", "paymentChannel"]
+    },
+    "Pledge": {
+      "title": "Pledge",
+      "description": "Vision 2030 building fund donation and student sponsorship pledge",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "donorName": { "type": "string" },
+        "phoneOrEmail": { "type": "string" },
+        "amountETB": { "type": "number" },
+        "tier": { "type": "string" },
+        "channel": { "type": "string" },
+        "referenceNumber": { "type": "string" },
+        "date": { "type": "string" },
+        "isConfirmed": { "type": "boolean" }
+      },
+      "required": ["donorName", "phoneOrEmail", "amountETB", "channel", "date"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with role management",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["DIRECTOR", "MUALLIM", "ADMIN", "GUARDIAN"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "Collection of enrolled Haffaz students"
+    },
+    "/hifz_logs/{logId}": {
+      "schema": "HifzLog",
+      "description": "Collection of daily recitation audit logs"
+    },
+    "/admissions/{admissionId}": {
+      "schema": "Admission",
+      "description": "Collection of admission applications"
+    },
+    "/pledges/{pledgeId}": {
+      "schema": "Pledge",
+      "description": "Collection of Vision 2030 donations and sponsorships"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and assigned role permissions"
+    }
+  }
+}

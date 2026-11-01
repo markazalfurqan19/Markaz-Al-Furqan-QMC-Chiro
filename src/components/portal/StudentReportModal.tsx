@@ -11,6 +11,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { Student, HifzLog } from '../../types';
+import { OFFICIAL_LOGO_URL } from '../../data/initialData';
 
 interface StudentReportModalProps {
   isOpen: boolean;
@@ -91,10 +92,16 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
           {docType === 'TRANSCRIPT' ? (
             /* ================= 1. OFFICIAL ACADEMIC TRANSCRIPT ================= */
             <div>
-              {/* Institutional Header */}
+              {/* Institutional Header with Official Emblem */}
               <div className="text-center border-b-2 border-[#0F5132] pb-5 mb-6 relative">
-                <div className="inline-block p-2 rounded-xl bg-emerald-50 mb-2 border border-emerald-200">
-                  <BookOpen className="w-7 h-7 text-[#0F5132] mx-auto" />
+                <div className="flex justify-center mb-3">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-[#D4AF37] shadow-md bg-white p-0.5">
+                    <img 
+                      src={OFFICIAL_LOGO_URL} 
+                      alt="Markazul Furqan Official Logo" 
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black text-[#0F5132] tracking-tight uppercase">
                   MARKAZUL FURQAN QURAN MEMORIZATION CENTER
@@ -269,6 +276,17 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
               <div className="absolute top-3 right-3 text-[#D4AF37] text-2xl font-quran select-none">❖</div>
               <div className="absolute bottom-3 left-3 text-[#D4AF37] text-2xl font-quran select-none">❖</div>
               <div className="absolute bottom-3 right-3 text-[#D4AF37] text-2xl font-quran select-none">❖</div>
+
+              {/* Official Center Emblem Header */}
+              <div className="flex justify-center mb-3">
+                <div className="w-24 h-24 sm:w-26 sm:h-26 rounded-full overflow-hidden border-4 border-[#D4AF37] shadow-xl bg-white p-1 ring-4 ring-amber-100 flex-shrink-0">
+                  <img 
+                    src={OFFICIAL_LOGO_URL} 
+                    alt="Markazul Furqan Official Logo" 
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+              </div>
 
               {/* Calligraphy Header */}
               <div className="mb-6">

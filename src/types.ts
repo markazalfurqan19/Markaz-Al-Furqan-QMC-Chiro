@@ -70,4 +70,27 @@ export interface UserSession {
   name: string;
   email: string;
   role: 'DIRECTOR' | 'MUALLIM' | 'ADMIN';
+  isGoogleAuth?: boolean;
+}
+
+export interface SiteContentConfig {
+  heroBadge: string;
+  heroTitle: string;
+  heroSub: string;
+  quranAyahArabic: string;
+  quranAyahTranslation: string;
+  targetAmountETB: number;
+  baseCollectedETB: number;
+  studentSponsorshipETB: number;
+  classroomEndowmentETB: number;
+  telebirrNumber: string;
+  cbeAccount: string;
+  awashAccount: string;
+  directorName: string;
+  directorTitle: string;
+  directorQuote: string;
+  contactPhone: string;
+  contactEmail: string;
+  campusLocation: string;
+  visitingHours: string;
 }

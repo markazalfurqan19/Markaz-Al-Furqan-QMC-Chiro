@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen, MapPin, Mail, Phone, Heart } from 'lucide-react';
+import { OFFICIAL_LOGO_URL } from '../data/initialData';
 
 interface FooterProps {
   onGoToPortal: () => void;
@@ -18,9 +19,13 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Col 1: Identity */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-[#0F5132] flex items-center justify-center text-[#D4AF37] border border-[#D4AF37]/40 shadow">
-                <BookOpen className="w-6 h-6" />
+            <div className="flex items-center gap-3.5">
+              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#D4AF37] shadow bg-white p-0.5 shrink-0">
+                <img 
+                  src={OFFICIAL_LOGO_URL} 
+                  alt="Markazul Furqan Official Logo" 
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
               <div>
                 <span className="text-[10px] tracking-widest uppercase font-bold text-[#D4AF37] block">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Heart, CheckCircle2, Building2 } from 'lucide-react';
 import { DonationPledge } from '../types';
+import { OFFICIAL_LOGO_URL } from '../data/initialData';
 
 interface PledgeModalProps {
   isOpen: boolean;
@@ -63,11 +64,15 @@ export const PledgeModal: React.FC<PledgeModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100">
         
-        {/* Header */}
+        {/* Header with Official Logo */}
         <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
-              <Heart className="w-5 h-5 fill-amber-800" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#D4AF37] p-0.5 bg-white shadow-xs shrink-0">
+              <img 
+                src={OFFICIAL_LOGO_URL} 
+                alt="Markazul Furqan Emblem" 
+                className="w-full h-full object-cover rounded-full"
+              />
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-900 leading-tight">

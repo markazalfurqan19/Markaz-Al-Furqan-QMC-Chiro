@@ -7,10 +7,22 @@ import {
   Send, 
   CheckCircle2, 
   HelpCircle,
-  MessageSquare
+  MessageSquare,
+  Edit3
 } from 'lucide-react';
+import { SiteContentConfig } from '../types';
 
-export const ContactSection: React.FC = () => {
+interface ContactSectionProps {
+  siteContent?: SiteContentConfig;
+  isOwnerMode?: boolean;
+  onEditContact?: () => void;
+}
+
+export const ContactSection: React.FC<ContactSectionProps> = ({
+  siteContent,
+  isOwnerMode,
+  onEditContact
+}) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,6 +31,11 @@ export const ContactSection: React.FC = () => {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+
+  const phoneNum = siteContent?.contactPhone || '+251935097339';
+  const emailAddr = siteContent?.contactEmail || 'markazalfurqan19@gmail.com';
+  const campusAddr = siteContent?.campusLocation || 'Adjacent to Grand Jame\'a Mosque, Central Chiro, West Hararghe, Oromia Region, Ethiopia';
+  const hours = siteContent?.visitingHours || 'Saturday – Thursday: 8:00 AM – 6:00 PM (Friday: After Jum\'ah)';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +53,21 @@ export const ContactSection: React.FC = () => {
   };
 
   return (
-    <section id="contact" className="py-20 px-4 sm:px-8 bg-white border-b border-gray-200">
+    <section id="contact" className="py-20 px-4 sm:px-8 bg-white border-b border-gray-200 relative">
+      {/* Owner Edit Floating Button */}
+      {isOwnerMode && (
+        <div className="max-w-6xl mx-auto flex justify-end mb-4">
+          <button
+            onClick={onEditContact}
+            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-3.5 py-1.5 rounded-full text-xs font-black shadow-md flex items-center gap-1.5 transition transform hover:scale-105"
+            title="Edit Contact details, phone, and hours"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Edit Contact & Location</span>
+          </button>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-14">
           <span className="text-xs font-black text-[#0F5132] uppercase tracking-wider bg-emerald-100 px-3.5 py-1.5 rounded-full inline-block mb-3">
@@ -59,9 +90,7 @@ export const ContactSection: React.FC = () => {
                 <span>Chiro Campus Address</span>
               </h4>
               <p className="text-xs text-gray-600 leading-relaxed mb-3">
-                Markazul Furqan Quran Memorization Center<br />
-                Chiro Town, West Hararghe Zone<br />
-                Oromia Region, Ethiopia
+                {campusAddr}
               </p>
               <div className="text-[11px] text-emerald-800 font-semibold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
                 Adjacent to Grand Jame'a Mosque, Central Chiro
@@ -74,10 +103,10 @@ export const ContactSection: React.FC = () => {
                 <div>
                   <span className="text-xs text-gray-500 block font-medium">Official Email:</span>
                   <a 
-                    href="mailto:markazalfurqan19@gmail.com" 
+                    href={`mailto:${emailAddr}`}
                     className="text-xs font-bold text-gray-900 hover:text-[#0F5132] transition"
                   >
-                    markazalfurqan19@gmail.com
+                    {emailAddr}
                   </a>
                 </div>
               </div>
@@ -85,8 +114,35 @@ export const ContactSection: React.FC = () => {
               <div className="flex items-start gap-3">
                 <Phone className="w-4 h-4 text-[#0F5132] shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-xs text-gray-500 block font-medium">Office Phone & Telebirr:</span>
-                  <span className="text-xs font-bold text-gray-900">+251 912 34 56 78</span>
+                  <span className="text-xs text-gray-500 block font-medium">Direct Phone & Helpline:</span>
+                  <a href={`tel:${phoneNum}`} className="text-xs font-black text-gray-900 hover:text-[#0F5132] transition font-mono">
+                    {phoneNum}
+                  </a>
+                </div>
+              </div>
+
+              {/* Direct WhatsApp and Telegram Integration */}
+              <div className="pt-2 pb-1 border-t border-gray-200">
+                <span className="text-[10px] font-bold uppercase text-gray-500 block mb-2">
+                  Instant Messaging Support ({phoneNum}):
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href="https://wa.me/251935097339"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl text-center text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href="https://t.me/+251935097339"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-sky-600 hover:bg-sky-700 text-white p-2 rounded-xl text-center text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <span>Telegram</span>
+                  </a>
                 </div>
               </div>
 
@@ -94,8 +150,7 @@ export const ContactSection: React.FC = () => {
                 <Clock className="w-4 h-4 text-[#0F5132] shrink-0 mt-0.5" />
                 <div>
                   <span className="text-xs text-gray-500 block font-medium">Office & Visiting Hours:</span>
-                  <span className="text-xs font-semibold text-gray-700">Saturday – Thursday: 8:00 AM – 6:00 PM</span>
-                  <span className="text-[11px] text-gray-500 block mt-0.5">Friday: After Jum'ah prayer</span>
+                  <span className="text-xs font-semibold text-gray-700">{hours}</span>
                 </div>
               </div>
             </div>
@@ -106,9 +161,10 @@ export const ContactSection: React.FC = () => {
               </h5>
               <p className="text-xs text-emerald-100/90 leading-relaxed">
                 Direct wire donations and sponsorship certificates can be facilitated via our dedicated email team at{' '}
-                <a href="mailto:markazalfurqan19@gmail.com" className="text-[#D4AF37] underline font-bold">
-                  markazalfurqan19@gmail.com
-                </a>.
+                <a href={`mailto:${emailAddr}`} className="text-[#D4AF37] underline font-bold">
+                  {emailAddr}
+                </a>{' '}
+                or WhatsApp at <strong>+251935097339</strong>.
               </p>
             </div>
           </div>
@@ -128,7 +184,7 @@ export const ContactSection: React.FC = () => {
                 <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
                 <h5 className="text-lg font-black text-gray-900">Message Received, Jazaakallahu Khayran!</h5>
                 <p className="text-xs text-gray-600 mt-2 max-w-md mx-auto">
-                  Your inquiry has been logged. Our office in Chiro will reach out via phone or email ({formData.email || 'provided contact'}).
+                  Your inquiry has been logged. Our office in Chiro will reach out via phone ({phoneNum}) or email ({formData.email || 'provided contact'}).
                 </p>
               </div>
             ) : (
@@ -152,7 +208,7 @@ export const ContactSection: React.FC = () => {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="0911..."
+                      placeholder="0911... or +251..."
                       className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:border-[#0F5132]"
                     />
                   </div>

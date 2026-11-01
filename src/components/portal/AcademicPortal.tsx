@@ -28,6 +28,10 @@ import { Student, HifzLog, AdmissionApplication, DonationPledge, CloudConfig, Us
 import { StudentReportModal } from './StudentReportModal';
 import { HifzLogModal } from './HifzLogModal';
 import { AddStudentModal } from './AddStudentModal';
+import { CertificateGenerator } from './CertificateGenerator';
+import { HifzProgressChart } from './HifzProgressChart';
+import { ReceiptModal } from '../ReceiptModal';
+import { OFFICIAL_LOGO_URL } from '../../data/initialData';
 
 interface AcademicPortalProps {
   students: Student[];
@@ -46,6 +50,7 @@ interface AcademicPortalProps {
   onExportJSON: () => void;
   onImportJSON: (file: File) => void;
   onResetData: () => void;
+  onShowToast?: (msg: string) => void;
 }
 
 export const AcademicPortal: React.FC<AcademicPortalProps> = ({
@@ -64,7 +69,8 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
   onExportCSV,
   onExportJSON,
   onImportJSON,
-  onResetData
+  onResetData,
+  onShowToast
 }) => {
   const [activeTab, setActiveTab] = useState<'ROSTER' | 'LOGS' | 'ADMISSIONS' | 'PLEDGES' | 'BACKUP'>('ROSTER');
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,8 +83,12 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
   const [selectedStudentForLog, setSelectedStudentForLog] = useState<Student | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedStudentForReport, setSelectedStudentForReport] = useState<Student | null>(null);
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [selectedStudentForCert, setSelectedStudentForCert] = useState<Student | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedPledgeForReceipt, setSelectedPledgeForReceipt] = useState<DonationPledge | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -113,24 +123,33 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
       
       {/* 1. TOP PORTAL HEADER & NAVIGATION */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-6 border-b border-gray-200 no-print">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 text-xs font-black text-[#0F5132] bg-emerald-100 px-3 py-1 rounded-full">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Live Institutional Academic Console
-            </span>
-            {currentUser && (
-              <span className="text-xs text-gray-500 font-semibold">
-                • Signed in as {currentUser.name}
-              </span>
-            )}
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-[#D4AF37] shadow-md bg-white p-0.5 shrink-0">
+            <img 
+              src={OFFICIAL_LOGO_URL} 
+              alt="Markazul Furqan Official Emblem" 
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-            Markazul Furqan Academic Ledger
-          </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Real-time management for Sabaq, Sabqi, and Manzil evaluations, student rosters, admissions, and verified transcripts.
-          </p>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 text-xs font-black text-[#0F5132] bg-emerald-100 px-3 py-1 rounded-full">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Live Institutional Academic Console
+              </span>
+              {currentUser && (
+                <span className="text-xs text-gray-500 font-semibold">
+                  • Signed in as {currentUser.name}
+                </span>
+              )}
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+              Markazul Furqan Academic Ledger
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Real-time management for Sabaq, Sabqi, and Manzil evaluations, student rosters, admissions, and verified transcripts.
+            </p>
+          </div>
         </div>
 
         {/* Global Quick Action Buttons */}
@@ -302,9 +321,16 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
       {/* 4. TAB CONTENTS */}
       {/* ================= TAB 1: STUDENTS ROSTER ================= */}
       {activeTab === 'ROSTER' && (
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden no-print">
-          {/* Table Filters & Search Bar */}
-          <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="space-y-6">
+          {/* Recharts 6-Month Hifz Progress Line Chart */}
+          <HifzProgressChart 
+            students={students} 
+            hifzLogs={hifzLogs} 
+          />
+
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden no-print">
+            {/* Table Filters & Search Bar */}
+            <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="relative w-full md:w-80">
               <input
                 type="text"
@@ -420,14 +446,27 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
                             Log Sabaq
                           </button>
 
-                          {/* Print Transcript / Certificate */}
+                          {/* Print Transcript / Report Card */}
                           <button
                             onClick={() => handleOpenReportModal(st)}
                             className="bg-[#0F5132] hover:bg-[#0A3622] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs"
-                            title="Generate official printable transcript or certificate"
+                            title="Generate official printable transcript"
                           >
                             <Printer className="w-3.5 h-3.5" />
                             <span>Report Card</span>
+                          </button>
+
+                          {/* Print Hifz Completion Certificate */}
+                          <button
+                            onClick={() => {
+                              setSelectedStudentForCert(st);
+                              setShowCertModal(true);
+                            }}
+                            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1 shadow-xs"
+                            title="Generate and print official Hifz completion certificate"
+                          >
+                            <Award className="w-3.5 h-3.5 text-amber-950" />
+                            <span>Print Certificate</span>
                           </button>
 
                           {/* Delete Student */}
@@ -446,6 +485,7 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       )}
 
@@ -641,6 +681,7 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
                   <th className="py-3 px-4">Bank / Channel</th>
                   <th className="py-3 px-4">Ref Number</th>
                   <th className="py-3 px-4 text-right">Amount (ETB)</th>
+                  <th className="py-3 px-4 text-center">Receipt</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -654,6 +695,19 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
                     <td className="py-3 px-4 font-mono text-[11px] text-gray-500">{p.referenceNumber || 'N/A'}</td>
                     <td className="py-3 px-4 text-right font-black text-sm text-[#0F5132]">
                       ETB {p.amountETB.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => {
+                          setSelectedPledgeForReceipt(p);
+                          setShowReceiptModal(true);
+                        }}
+                        className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-lg font-bold text-[11px] transition flex items-center gap-1 mx-auto cursor-pointer"
+                        title="Print Official Donation Receipt"
+                      >
+                        <Printer className="w-3 h-3 text-[#D4AF37]" />
+                        <span>Receipt</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -683,6 +737,24 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
               >
                 <FileSpreadsheet className="w-4 h-4 text-[#D4AF37]" />
                 <span>Export Students & Logs to CSV (Excel)</span>
+              </button>
+
+              {/* Google Sheets Integration */}
+              <button
+                onClick={async () => {
+                  try {
+                    const { exportToGoogleSheets } = await import('../../lib/workspace');
+                    const res = await exportToGoogleSheets('Academic Ledger', students, hifzLogs);
+                    onShowToast?.(`Google Spreadsheet created! ID: ${res.spreadsheetId.slice(0, 12)}...`);
+                  } catch (e: any) {
+                    console.error(e);
+                    onShowToast?.(e.message || 'Error exporting to Google Sheets');
+                  }
+                }}
+                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+                <span>Sync & Export Directly to Google Sheets</span>
               </button>
 
               <button
@@ -786,6 +858,24 @@ export const AcademicPortal: React.FC<AcademicPortalProps> = ({
         }}
         student={selectedStudentForReport}
         logs={hifzLogs}
+      />
+
+      <CertificateGenerator
+        isOpen={showCertModal}
+        onClose={() => {
+          setShowCertModal(false);
+          setSelectedStudentForCert(null);
+        }}
+        student={selectedStudentForCert}
+      />
+
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => {
+          setShowReceiptModal(false);
+          setSelectedPledgeForReceipt(null);
+        }}
+        pledge={selectedPledgeForReceipt}
       />
 
       {/* Custom In-App Delete Student Confirmation Modal */}

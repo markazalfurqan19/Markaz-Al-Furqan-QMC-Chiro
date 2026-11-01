@@ -9,9 +9,13 @@ import {
   GraduationCap, 
   Sparkles,
   Menu,
-  X
+  X,
+  Edit3,
+  Phone,
+  MessageCircle
 } from 'lucide-react';
 import { UserSession } from '../types';
+import { OFFICIAL_LOGO_URL } from '../data/initialData';
 
 interface HeaderProps {
   currentTab: 'home' | 'portal';
@@ -21,6 +25,9 @@ interface HeaderProps {
   onLogout: () => void;
   onOpenCloudConfig: () => void;
   onOpenAdmission: () => void;
+  isOwnerMode?: boolean;
+  onToggleOwnerMode?: () => void;
+  onOpenOwnerEdit?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,7 +37,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
   onOpenCloudConfig,
-  onOpenAdmission
+  onOpenAdmission,
+  isOwnerMode,
+  onToggleOwnerMode,
+  onOpenOwnerEdit
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -45,24 +55,59 @@ export const Header: React.FC<HeaderProps> = ({
               Chiro, West Hararghe, Oromia, Ethiopia
             </span>
             <span className="hidden sm:inline text-emerald-600">•</span>
-            <span className="flex items-center gap-1.5 font-medium">
-              <UserCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
-              Leadership: Ustaz Kadir Hamza Siyum
-            </span>
+            <a 
+              href="https://wa.me/251935097339" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center gap-1 text-[#D4AF37] font-bold hover:underline"
+              title="Official Phone, WhatsApp & Telegram"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>+251935097339</span>
+            </a>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* Functional Owner Website Edit Toggle */}
+            <button
+              onClick={onToggleOwnerMode}
+              className={`px-3 py-1 rounded-full text-[11px] font-black transition flex items-center gap-1.5 shadow-sm ${
+                isOwnerMode 
+                  ? 'bg-[#D4AF37] text-gray-950 ring-2 ring-amber-300' 
+                  : 'bg-emerald-900/80 hover:bg-emerald-800 text-[#D4AF37] border border-[#D4AF37]/40'
+              }`}
+              title="Toggle Owner Website Editing Mode"
+            >
+              <Edit3 className="w-3 h-3" />
+              <span>{isOwnerMode ? 'Owner Editing: ON' : 'Owner Edit Mode'}</span>
+            </button>
+
+            {isOwnerMode && (
+              <button
+                onClick={onOpenOwnerEdit}
+                className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-2.5 py-1 rounded-full text-[11px] font-black transition flex items-center gap-1 shadow-sm"
+                title="Open Live Content Editor"
+              >
+                <span>Edit Site Content</span>
+              </button>
+            )}
+
             <button
               onClick={onOpenCloudConfig}
-              className="hover:text-[#D4AF37] transition-colors flex items-center gap-1.5 text-emerald-200"
+              className="hover:text-[#D4AF37] transition-colors flex items-center gap-1 text-emerald-200"
               title="Configure Cloud & Google Sheet Webhook Sync"
             >
               <Cloud className="w-3.5 h-3.5" />
-              <span>Cloud Sync</span>
+              <span className="hidden sm:inline">Cloud Sync</span>
             </button>
+
             <span className="text-[#D4AF37]/50">|</span>
+
             {currentUser ? (
               <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full overflow-hidden border border-[#D4AF37] flex-shrink-0 shadow-xs">
+                  <img src={OFFICIAL_LOGO_URL} alt="Profile" className="w-full h-full object-cover" />
+                </div>
                 <span className="text-[#D4AF37] font-semibold flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   {currentUser.name} ({currentUser.role})
@@ -81,23 +126,44 @@ export const Header: React.FC<HeaderProps> = ({
                 className="hover:text-[#D4AF37] text-white transition-colors font-semibold flex items-center gap-1.5"
               >
                 <LogIn className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Mu'allim / Admin Login</span>
+                <span>Director / Mu'allim Sign-In</span>
               </button>
             )}
           </div>
         </div>
       </div>
 
+      {/* Owner Edit Mode Banner Notification */}
+      {isOwnerMode && (
+        <div className="bg-[#D4AF37] text-gray-950 py-1.5 px-4 text-xs font-bold text-center flex items-center justify-center gap-3 no-print shadow-inner">
+          <span className="flex items-center gap-1.5 font-black uppercase tracking-wider">
+            <Edit3 className="w-4 h-4" />
+            Owner Website Live Editing Active
+          </span>
+          <span>• Click any "Edit Section" button to modify text, Vision 2030 amounts, or contacts live</span>
+          <button
+            onClick={onOpenOwnerEdit}
+            className="bg-[#0F5132] hover:bg-[#0A3622] text-white px-3 py-0.5 rounded-full text-[11px] font-black"
+          >
+            Open Editor Modal
+          </button>
+        </div>
+      )}
+
       {/* 2. NAVIGATION HEADER */}
       <header className="bg-white sticky top-0 z-40 shadow-sm border-b border-gray-200/80 no-print">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex justify-between items-center">
-          {/* Logo & Brand Title */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex justify-between items-center">
+          {/* Official Logo & Brand Title */}
           <div 
-            className="flex items-center gap-3 cursor-pointer select-none group"
+            className="flex items-center gap-3.5 cursor-pointer select-none group"
             onClick={() => setCurrentTab('home')}
           >
-            <div className="w-12 h-12 rounded-xl bg-[#0F5132] flex items-center justify-center text-[#D4AF37] shadow-md border border-[#D4AF37]/40 group-hover:scale-105 transition-transform">
-              <BookOpen className="w-6 h-6" />
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[#D4AF37] shadow-md group-hover:scale-105 transition-transform bg-white flex-shrink-0 p-0.5">
+              <img 
+                src={OFFICIAL_LOGO_URL} 
+                alt="Markazul Furqan Official Logo - Chiro, Ethiopia" 
+                className="w-full h-full object-cover rounded-full"
+              />
             </div>
             <div>
               <span className="text-[10px] tracking-widest uppercase font-bold text-[#0F5132] block">
@@ -126,14 +192,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setCurrentTab('home')}
               className="text-gray-700 hover:text-[#0F5132] transition-colors"
             >
-              Curriculum & Methodology
+              Curriculum
             </a>
             <a 
               href="#quran-explorer" 
               onClick={() => setCurrentTab('home')}
               className="text-gray-700 hover:text-[#0F5132] transition-colors"
             >
-              Juz & Tajweed Guide
+              30 Juz Guide
             </a>
             <a 
               href="#campaign" 
@@ -190,6 +256,19 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Mobile Dropdown */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white px-6 py-4 space-y-3 text-sm font-semibold shadow-xl">
+            <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 flex justify-between items-center text-xs">
+              <span className="font-bold text-gray-800">Owner Live Editing:</span>
+              <button
+                onClick={() => {
+                  onToggleOwnerMode?.();
+                  setMobileMenuOpen(false);
+                }}
+                className="bg-[#D4AF37] text-gray-950 px-3 py-1 rounded-lg font-black"
+              >
+                {isOwnerMode ? 'Turn OFF' : 'Turn ON'}
+              </button>
+            </div>
+
             <a 
               href="#about" 
               onClick={() => { setCurrentTab('home'); setMobileMenuOpen(false); }}
@@ -223,7 +302,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => { setCurrentTab('home'); setMobileMenuOpen(false); }}
               className="block text-gray-700 hover:text-[#0F5132]"
             >
-              Contact & Location
+              Contact (+251935097339)
             </a>
             <div className="pt-2 flex flex-col gap-2">
               <button

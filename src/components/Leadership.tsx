@@ -5,28 +5,63 @@ import {
   Award, 
   BookOpen, 
   CheckCircle, 
-  GraduationCap 
+  GraduationCap,
+  Edit3
 } from 'lucide-react';
+import { SiteContentConfig } from '../types';
+import { OFFICIAL_LOGO_URL } from '../data/initialData';
 
-export const Leadership: React.FC = () => {
+interface LeadershipProps {
+  siteContent?: SiteContentConfig;
+  isOwnerMode?: boolean;
+  onEditLeadership?: () => void;
+}
+
+export const Leadership: React.FC<LeadershipProps> = ({
+  siteContent,
+  isOwnerMode,
+  onEditLeadership
+}) => {
+  const dirName = siteContent?.directorName || 'Ustaz Kadir Hamza Siyum';
+  const dirTitle = siteContent?.directorTitle || 'Founder & Directorate Chair';
+  const dirQuote = siteContent?.directorQuote || '"Our mission is to produce individuals who do not merely memorize the letter of the text, but embody the character, ethics, and mercy of the Holy Qur\'an with academic excellence."';
+
   return (
-    <section id="about" className="py-20 px-4 sm:px-8 bg-[#F8F9FA] border-b border-gray-200">
+    <section id="about" className="py-20 px-4 sm:px-8 bg-[#F8F9FA] border-b border-gray-200 relative">
+      {/* Owner Edit Floating Button */}
+      {isOwnerMode && (
+        <div className="max-w-6xl mx-auto flex justify-end mb-4">
+          <button
+            onClick={onEditLeadership}
+            className="bg-[#D4AF37] hover:bg-[#E9C46A] text-gray-950 px-3.5 py-1.5 rounded-full text-xs font-black shadow-md flex items-center gap-1.5 transition transform hover:scale-105"
+            title="Edit Leadership title and personal quote"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Edit Leadership & Quote</span>
+          </button>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
           
-          {/* Left Column: Ustaz Kadir Hamza Siyum Profile */}
+          {/* Left Column: Ustaz Kadir Hamza Siyum Profile with Official Center Emblem */}
           <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm flex flex-col justify-between">
             <div>
-              <div className="w-24 h-24 bg-[#0F5132] rounded-3xl flex items-center justify-center text-[#D4AF37] text-4xl mb-6 mx-auto shadow-md border-2 border-[#D4AF37]/50">
-                <GraduationCap className="w-12 h-12" />
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#D4AF37] shadow-lg mb-6 mx-auto bg-white p-1 ring-4 ring-emerald-50">
+                <img 
+                  src={OFFICIAL_LOGO_URL} 
+                  alt="Markazul Furqan Official Emblem" 
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
               
               <div className="text-center mb-6">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#0F5132] bg-emerald-100 px-3 py-1 rounded-full">
-                  Founder & Directorate Chair
+                  {dirTitle}
                 </span>
                 <h4 className="text-2xl font-black text-gray-900 mt-2">
-                  Ustaz Kadir Hamza Siyum
+                  {dirName}
                 </h4>
                 <p className="text-xs text-gray-500 font-semibold mt-0.5">
                   Senior Reciter & Director, Markazul Furqan
@@ -40,7 +75,7 @@ export const Leadership: React.FC = () => {
               <div className="bg-emerald-50/70 border-l-4 border-[#D4AF37] p-4 rounded-r-2xl my-4 relative">
                 <Quote className="w-6 h-6 text-[#D4AF37] opacity-60 absolute top-2 right-2" />
                 <p className="text-xs italic text-gray-700 leading-relaxed font-medium">
-                  "Our mission is to produce individuals who do not merely memorize the letter of the text, but embody the character, ethics, and mercy of the Holy Qur'an with academic excellence."
+                  {dirQuote}
                 </p>
               </div>
             </div>

@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Public or registered student records
+    match /students/{studentId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn();
+    }
+
+    // Daily Hifz logs
+    match /hifz_logs/{logId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn();
+    }
+
+    // Admission applications
+    match /admissions/{admissionId} {
+      allow read: if isSignedIn();
+      allow create: if true; // Public can submit application
+      allow update, delete: if isSignedIn();
+    }
+
+    // Vision 2030 Pledges
+    match /pledges/{pledgeId} {
+      allow read: if true;
+      allow create: if true; // Public can submit donation pledge
+      allow update, delete: if isSignedIn();
+    }
+
+    // User profiles & settings
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+
+    // Website live content config
+    match /site_config/{configId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+  }
+}
